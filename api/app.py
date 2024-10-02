@@ -94,8 +94,7 @@ def get_reservas_geral():
     except Exception as e:
         print(f"Erro: {e}")
         return jsonify({"error": "Erro ao recuperar as reservas"}), 500
-        
-# Rota para obter o reserva por matricula
+
 @app.route('/reserve/status', methods=['GET'])
 def get_reservas_por_matricula():
     try:
@@ -123,43 +122,6 @@ def get_reservas_por_matricula():
     except Exception as e:
         print(f"Erro: {e}")
         return jsonify({"error": "Erro ao recuperar as reservas"}), 500
-
-# Rota para obter detalhes da reserva, incluindo motivo da rejeição
-@app.route('/motivos/rejeicao/<int:id>', methods=['GET'])
-def get_reserva_detalhes(id):
-    try:
-        # Consulta a reserva pelo ID
-        query_reserva = """
-        SELECT r.id, r.lab_name, r.date, r.time, r.time_fim, r.purpose, r.status, r.nome, r.matricula, r.software_especifico, r.software_nome, 
-               rej.motivo AS motivo_rejeicao
-        FROM reservas r
-        LEFT JOIN rejeicoes rej ON r.id = rej.pedido_id
-        WHERE r.id = %s
-        """
-        cursor.execute(query_reserva, (id,))
-        reserva = cursor.fetchone()
-
-        if not reserva:
-            return jsonify({"error": "Reserva não encontrada"}), 404
-
-        # Retorna os detalhes da reserva, incluindo o motivo da rejeição se existir
-        return jsonify({
-            "id": reserva[0],
-            "lab_name": reserva[1],
-            "date": reserva[2],
-            "time": reserva[3],
-            "time_fim": reserva[4],
-            "purpose": reserva[5],
-            "status": reserva[6],
-            "nome": reserva[7],
-            "matricula": reserva[8],
-            "software_especifico": reserva[9],
-            "software_nome": reserva[10],
-            "motivo_rejeicao": reserva[11]  # Aqui você já tem o motivo correto
-        })
-    except Exception as e:
-        print(f"Erro: {e}")
-        return jsonify({"error": "Erro ao recuperar os detalhes da reserva"}), 500
 
 # Rota para cancelar solicitação
 @app.route('/reserve/<int:id>', methods=['PUT'])
@@ -224,7 +186,7 @@ def rejeitar_pedido(id):
         print(f"Erro: {e}")
         return jsonify({"error": "Erro ao rejeitar o pedido"}), 500
 
-# Rota para aprovar ou rejeitar 
+# Rota para aprovar
 @app.route('/aprovar/pedido/<int:id>', methods=['PUT'])
 def update_reservas_aprj(id):
     try:
