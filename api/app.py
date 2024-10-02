@@ -140,7 +140,20 @@ def get_reserva_detalhes(id):
         reserva = cursor.fetchone()
 
         if not reserva:
-            return jsonify({"error": "Reserva não encontrada"}), 404
+            return jsonify({
+            "id": reserva[0],
+            "lab_name": reserva[1],
+            "date": reserva[2],
+            "time": reserva[3],
+            "time_fim": reserva[4],
+            "purpose": reserva[5],
+            "status": reserva[6],
+            "nome": reserva[7],
+            "matricula": reserva[8],
+            "software_especifico": reserva[9],
+            "software_nome": reserva[10],
+            "motivo_rejeicao": reserva[11]  # Aqui você já tem o motivo correto
+            })
 
         # Retorna os detalhes da reserva, incluindo o motivo da rejeição se existir
         return jsonify(reserva)
