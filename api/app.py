@@ -124,7 +124,7 @@ def get_reservas_por_matricula():
         print(f"Erro: {e}")
         return jsonify({"error": "Erro ao recuperar as reservas"}), 500
 
-
+# Rota para obter o motivo de rejeição
 @app.route('/rejeicoes/<int:pedido_id>', methods=['GET'])
 def get_rejeicao(pedido_id):
     cursor = db.cursor(dictionary=True)
@@ -135,7 +135,7 @@ def get_rejeicao(pedido_id):
     if result:
         return jsonify(result)
     else:
-        return abort(404, description="Motivo de rejeição não encontrado")
+        return jsonify({"error": "Motivo de rejeição não encontrado"}), 404
 
 # Rota para cancelar solicitação
 @app.route('/reserve/<int:id>', methods=['PUT'])
