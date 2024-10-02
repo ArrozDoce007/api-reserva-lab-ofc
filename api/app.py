@@ -140,7 +140,10 @@ def get_reserva_detalhes(id):
         reserva = cursor.fetchone()
 
         if not reserva:
-            return jsonify({
+            return jsonify({"error": "Reserva não encontrada"}), 404
+
+        # Retorna os detalhes da reserva, incluindo o motivo da rejeição se existir
+        return jsonify({
             "id": reserva[0],
             "lab_name": reserva[1],
             "date": reserva[2],
@@ -153,10 +156,7 @@ def get_reserva_detalhes(id):
             "software_especifico": reserva[9],
             "software_nome": reserva[10],
             "motivo_rejeicao": reserva[11]  # Aqui você já tem o motivo correto
-            })
-
-        # Retorna os detalhes da reserva, incluindo o motivo da rejeição se existir
-        return jsonify(reserva)
+        })
     except Exception as e:
         print(f"Erro: {e}")
         return jsonify({"error": "Erro ao recuperar os detalhes da reserva"}), 500
