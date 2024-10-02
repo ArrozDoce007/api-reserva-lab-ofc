@@ -193,7 +193,7 @@ def update_reservas_aprj(id):
         data = request.json
         new_status = data.get('status')
 
-        if new_status not in ['pendente', 'aprovado', 'rejeitado']:
+        if new_status not in ['pendente', 'aprovado']:
             return jsonify({"error": "Status inválido"}), 400
 
         update_query = "UPDATE reservas SET status = %s WHERE id = %s"
