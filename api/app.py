@@ -151,8 +151,43 @@ def update_reservas(id):
     except Exception as e:
         return jsonify({"error": f"Erro ao atualizar a reserva: {str(e)}"}), 500
 
+# Rota para rejeitar um pedido
+@app.route('/rejeitar/pedido/<int:id>', methods=['POST'])
+def rejeitar_pedido(id):
+    try:
+        data = request.json
+        motivo = data.get('motivo')
+
+        if not motivo:
+            return jsonify({"error": "Motivo é obrigatório"}), 400
+
+        # Atualiza o status do pedido para rejeitado
+        update_query = "UPDATE reservas SET status = %s WHERE id = %s"
+        cursor.execute(update_query, ('rejeitado', id))
+        db.commit()
+
+        if cursor.rowcount == 0:
+            return jsonify({"error": "Pedido não encontrado"}), 404
+
+        # Insere o motivo na tabela de rejeições
+        insert_query = "INSERT INTO rejeicoes (pedido_id, motivo) VALUES (%s, %s)"
+        cursor.execute(insert_query, (id, motivo))
+        db.commit()
+
+        # Criar notificação para o usuário
+        cursor.execute("SELECT matricula, lab_name, date FROM reservas WHERE id = %s", (id,))
+        reservation = cursor.fetchone()
+        if reservation:
+            notification_message = f"Sua reserva para {reservation['lab_name']} em {reservation['date']} foi rejeitada. Motivo: {motivo}."
+            create_notification(reservation['matricula'], notification_message)
+
+        return jsonify({"message": "Pedido rejeitado com sucesso"}), 200
+    except Exception as e:
+        print(f"Erro: {e}")
+        return jsonify({"error": "Erro ao rejeitar o pedido"}), 500
+
 # Rota para aprovar ou rejeitar 
-@app.route('/reserve/pedido/<int:id>', methods=['PUT'])
+@app.route('/aprovar/pedido/<int:id>', methods=['PUT'])
 def update_reservas_aprj(id):
     try:
         data = request.json
