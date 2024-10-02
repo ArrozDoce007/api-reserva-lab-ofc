@@ -65,7 +65,7 @@ def reservas_lab():
         nome = data.get('userName')
         matricula = data.get('userMatricula')
         software_especifico = data.get('softwareEspecifico', False)
-        software_nome = data.get('softwareNome') if software_especifico else None
+        software_nome = data.get('softwareNome')
 
         insert_query = """
         INSERT INTO reservas (lab_name, date, time, time_fim, purpose, nome, matricula, status, software_especifico, software_nome)
