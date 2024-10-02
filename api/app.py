@@ -64,12 +64,14 @@ def reservas_lab():
         purpose = data.get('purpose')
         nome = data.get('userName')
         matricula = data.get('userMatricula')
+        software_especifico = data.get('softwareEspecifico', False)
+        software_nome = data.get('softwareNome') if software_especifico else None
 
         insert_query = """
-        INSERT INTO reservas (lab_name, date, time, time_fim, purpose, nome, matricula, status)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO reservas (lab_name, date, time, time_fim, purpose, nome, matricula, status, software_especifico, software_nome)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
-        cursor.execute(insert_query, (lab_name, date, time, time_fim, purpose, nome, matricula, "pendente"))
+        cursor.execute(insert_query, (lab_name, date, time, time_fim, purpose, nome, matricula, "pendente", software_especifico, software_nome))
         db.commit()
 
         # Criar notificação para o usuário
@@ -85,19 +87,18 @@ def reservas_lab():
 @app.route('/reserve/status/geral', methods=['GET'])
 def get_reservas_geral():
     try:
-        query = "SELECT id, lab_name, date, time, time_fim, purpose, status, nome, matricula FROM reservas"
+        query = "SELECT id, lab_name, date, time, time_fim, purpose, status, nome, matricula, software_especifico, software_nome FROM reservas"
         cursor.execute(query)
         reservations = cursor.fetchall()
         return jsonify(reservations)
     except Exception as e:
         print(f"Erro: {e}")
         return jsonify({"error": "Erro ao recuperar as reservas"}), 500
-    
-# Rota para obter reserva por matricula
+
 @app.route('/reserve/status', methods=['GET'])
 def get_reservas_por_matricula():
     try:
-        query = "SELECT id, lab_name, date, time, time_fim, purpose, status, nome, matricula FROM reservas"
+        query = "SELECT id, lab_name, date, time, time_fim, purpose, status, nome, matricula, software_especifico, software_nome FROM reservas"
         cursor.execute(query)
         reservations = cursor.fetchall()
 
@@ -112,7 +113,9 @@ def get_reservas_por_matricula():
                 'purpose': reservation['purpose'],
                 'status': reservation['status'],
                 'user_name': reservation['nome'],
-                'user_matricula': reservation['matricula']
+                'user_matricula': reservation['matricula'],
+                'software_especifico': reservation['software_especifico'],
+                'software_nome': reservation['software_nome']
             })
 
         return jsonify(reservations_list)
