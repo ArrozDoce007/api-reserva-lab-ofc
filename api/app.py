@@ -125,7 +125,7 @@ def get_reservas_por_matricula():
         return jsonify({"error": "Erro ao recuperar as reservas"}), 500
 
 # Rota para obter detalhes da reserva, incluindo motivo da rejeição
-@app.route('/reserve/<int:id>', methods=['GET'])
+@app.route('/motivos/rejeicao/<int:id>', methods=['GET'])
 def get_reserva_detalhes(id):
     try:
         # Consulta a reserva pelo ID
