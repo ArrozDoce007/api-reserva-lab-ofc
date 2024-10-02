@@ -94,7 +94,8 @@ def get_reservas_geral():
     except Exception as e:
         print(f"Erro: {e}")
         return jsonify({"error": "Erro ao recuperar as reservas"}), 500
-
+        
+# Rota para obter o reserva por matricula
 @app.route('/reserve/status', methods=['GET'])
 def get_reservas_por_matricula():
     try:
@@ -122,6 +123,30 @@ def get_reservas_por_matricula():
     except Exception as e:
         print(f"Erro: {e}")
         return jsonify({"error": "Erro ao recuperar as reservas"}), 500
+
+# Rota para obter detalhes da reserva, incluindo motivo da rejeição
+@app.route('/reserve/<int:id>', methods=['GET'])
+def get_reserva_detalhes(id):
+    try:
+        # Consulta a reserva pelo ID
+        query_reserva = """
+        SELECT r.id, r.lab_name, r.date, r.time, r.time_fim, r.purpose, r.status, r.nome, r.matricula, r.software_especifico, r.software_nome, 
+               rej.motivo AS motivo_rejeicao
+        FROM reservas r
+        LEFT JOIN rejeicoes rej ON r.id = rej.pedido_id
+        WHERE r.id = %s
+        """
+        cursor.execute(query_reserva, (id,))
+        reserva = cursor.fetchone()
+
+        if not reserva:
+            return jsonify({"error": "Reserva não encontrada"}), 404
+
+        # Retorna os detalhes da reserva, incluindo o motivo da rejeição se existir
+        return jsonify(reserva)
+    except Exception as e:
+        print(f"Erro: {e}")
+        return jsonify({"error": "Erro ao recuperar os detalhes da reserva"}), 500
 
 # Rota para cancelar solicitação
 @app.route('/reserve/<int:id>', methods=['PUT'])
