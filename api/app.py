@@ -95,6 +95,7 @@ def get_reservas_geral():
         print(f"Erro: {e}")
         return jsonify({"error": "Erro ao recuperar as reservas"}), 500
 
+# Rota para obter o reserva por matricula
 @app.route('/reserve/status', methods=['GET'])
 def get_reservas_por_matricula():
     try:
@@ -122,6 +123,24 @@ def get_reservas_por_matricula():
     except Exception as e:
         print(f"Erro: {e}")
         return jsonify({"error": "Erro ao recuperar as reservas"}), 500
+
+# Rota para obter o motivo de rejeicão
+@app.route('/rejections/<int:pedido_id>', methods=['GET'])
+def get_rejection_reason(pedido_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    
+    query = "SELECT motivo FROM rejeicoes WHERE pedido_id = %s"
+    cursor.execute(query, (pedido_id,))
+    rejection = cursor.fetchone()
+    
+    cursor.close()
+    conn.close()
+    
+    if rejection:
+        return jsonify({'motivo': rejection['motivo']})
+    else:
+        return jsonify({'motivo': None}), 404
 
 # Rota para cancelar solicitação
 @app.route('/reserve/<int:id>', methods=['PUT'])
