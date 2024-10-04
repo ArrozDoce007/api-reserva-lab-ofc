@@ -3,5 +3,3 @@ Flask-Cors
 mysql-connector-python
 gunicorn
 jsonify
-datetime
-pytz
