@@ -1,8 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import mysql.connector
-from datetime import datetime
-import pytz
 
 app = Flask(__name__)
 CORS(app)  # Habilita CORS para todas as rotas
@@ -24,10 +22,21 @@ except mysql.connector.Error as err:
 @app.route('/time/brazilia', methods=['GET'])
 def get_brasilia_time():
     try:
-        brasilia_tz = pytz.timezone('America/Sao_Paulo')
-        brasilia_time = datetime.now(brasilia_tz)
-        formatted_time = brasilia_time.strftime('%Y-%m-%dT%H:%M:%S')
-        return jsonify({'datetime': formatted_time})
+        # Consulta para obter a data e hora atual do banco de dados
+        cursor.execute("SELECT NOW() as now_time")  # Altere 'current_time' para 'now_time'
+        result = cursor.fetchone()
+        
+        # Verifica se o resultado não é None
+        if result:
+            current_time = result['now_time']  # Altere para 'now_time'
+            formatted_time = current_time.strftime('%Y-%m-%dT%H:%M:%S')
+            return jsonify({'datetime': formatted_time})
+        else:
+            return jsonify({"error": "Erro ao obter a data e hora atual"}), 500
+
+    except mysql.connector.Error as db_err:
+        print(f"Erro ao acessar o banco de dados: {db_err}")
+        return jsonify({"error": "Erro ao obter a data e hora atual do banco de dados"}), 500
     except Exception as e:
         print(f"Erro: {e}")
         return jsonify({"error": "Erro ao obter a data e hora atual"}), 500
