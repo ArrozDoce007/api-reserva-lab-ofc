@@ -10,7 +10,7 @@ CORS(app)  # Habilita CORS para todas as rotas
 # Conexão com o banco de dados MySQL
 try:
     db = mysql.connector.connect(
-        host="database-2.c9ec8o0ioxuo.us-east-2.rds.amazonaws.com",
+        host="database-1.c9ec8o0ioxuo.us-east-2.rds.amazonaws.com",
         user="admin",
         password="26042004",
         database="lab_reservation"
