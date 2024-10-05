@@ -11,7 +11,7 @@ CORS(app)  # Habilita CORS para todas as rotas
 def get_db_connection():
     try:
         db = mysql.connector.connect(
-            host="database-1.c9ec8o0ioxuo.us-east-2.rds.amazonaws.com",
+            host="192.168.1.13",
             user="admin",
             password="26042004",
             database="lab_reservation"
