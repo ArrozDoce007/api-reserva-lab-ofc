@@ -286,12 +286,21 @@ def update_reservas_aprj(id):
 
 # Função auxiliar para criar notificações
 def create_notification(user_matricula, message):
+    db = get_db_connection()
+    if db is None:
+        print("Erro ao conectar ao banco de dados")
+        return
+
+    cursor = db.cursor()
     try:
         insert_query = "INSERT INTO notifications (user_matricula, message) VALUES (%s, %s)"
         cursor.execute(insert_query, (user_matricula, message))
         db.commit()
     except Exception as e:
         print(f"Erro ao criar notificação: {e}")
+    finally:
+        cursor.close()
+        db.close()
 
 # Rota para obter notificações do usuário
 @app.route('/notifications/<string:matricula>', methods=['GET'])
