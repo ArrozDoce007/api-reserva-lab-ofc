@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, make_response
 from flask_cors import CORS
 import mysql.connector
 from datetime import datetime
@@ -8,17 +8,18 @@ app = Flask(__name__)
 CORS(app)  # Habilita CORS para todas as rotas
 
 # Conexão com o banco de dados MySQL
-try:
-    db = mysql.connector.connect(
-        host="database-1.c9ec8o0ioxuo.us-east-2.rds.amazonaws.com",
-        user="admin",
-        password="26042004",
-        database="lab_reservation"
-    )
-    cursor = db.cursor(dictionary=True)
-except mysql.connector.Error as err:
-    print(f"Erro ao conectar ao banco de dados: {err}")
-    exit(1)
+def get_db_connection():
+    try:
+        db = mysql.connector.connect(
+            host="database-1.c9ec8o0ioxuo.us-east-2.rds.amazonaws.com",
+            user="admin",
+            password="26042004",
+            database="lab_reservation"
+        )
+        return db
+    except mysql.connector.Error as err:
+        print(f"Erro ao conectar ao banco de dados: {err}")
+        return None
 
 # Rota data e hora
 @app.route('/time/brazilia', methods=['GET'])
@@ -86,21 +87,31 @@ def reservas_lab():
 # Rota para obter o reserva geral
 @app.route('/reserve/status/geral', methods=['GET'])
 def get_reservas_geral():
+    db = get_db_connection()
+    if db is None:
+        return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
+
+    cursor = db.cursor(dictionary=True)
     try:
         query = "SELECT id, lab_name, date, time, time_fim, purpose, status, nome, matricula, software_especifico, software_nome FROM reservas"
         cursor.execute(query)
         reservations = cursor.fetchall()
-
-        response = jsonify(reservations)
-        response.headers['Cache-Control'] = 'no-store'  # Desativa o cache para essa rota
-        return response
+        return jsonify(reservations)
     except Exception as e:
         print(f"Erro: {e}")
         return jsonify({"error": "Erro ao recuperar as reservas"}), 500
+    finally:
+        cursor.close()
+        db.close()
 
-# Rota para obter o reserva por matricula
+# Rota para obter o reserva por matrícula
 @app.route('/reserve/status', methods=['GET'])
 def get_reservas_por_matricula():
+    db = get_db_connection()
+    if db is None:
+        return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
+
+    cursor = db.cursor(dictionary=True)
     try:
         query = "SELECT id, lab_name, date, time, time_fim, purpose, status, nome, matricula, software_especifico, software_nome FROM reservas"
         cursor.execute(query)
@@ -122,12 +133,13 @@ def get_reservas_por_matricula():
                 'software_nome': reservation['software_nome']
             })
 
-        response = jsonify(reservations_list)
-        response.headers['Cache-Control'] = 'no-store'  # Desativa o cache para essa rota
-        return response
+        return jsonify(reservations_list)
     except Exception as e:
         print(f"Erro: {e}")
         return jsonify({"error": "Erro ao recuperar as reservas"}), 500
+    finally:
+        cursor.close()
+        db.close()
 
 # Rota para obter o motivo de rejeição
 @app.route('/rejeicoes/<int:pedido_id>', methods=['GET'])
