@@ -93,7 +93,7 @@ def reservas_lab():
         db.commit()
 
         # Criar notificação após a reserva ser criada
-        notification_message = f"Sua reserva para {lab_name} em {date} foi solicitada com sucesso."
+        notification_message = f"Sua reserva para {lab_name} em {date} foi solicitada e está pendente de aprovação."
         create_notification(matricula, notification_message)
 
         return "", 204
