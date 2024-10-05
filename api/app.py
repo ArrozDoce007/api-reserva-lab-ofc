@@ -90,7 +90,10 @@ def get_reservas_geral():
         query = "SELECT id, lab_name, date, time, time_fim, purpose, status, nome, matricula, software_especifico, software_nome FROM reservas"
         cursor.execute(query)
         reservations = cursor.fetchall()
-        return jsonify(reservations)
+
+        response = jsonify(reservations)
+        response.headers['Cache-Control'] = 'no-store'  # Desativa o cache para essa rota
+        return response
     except Exception as e:
         print(f"Erro: {e}")
         return jsonify({"error": "Erro ao recuperar as reservas"}), 500
@@ -119,7 +122,9 @@ def get_reservas_por_matricula():
                 'software_nome': reservation['software_nome']
             })
 
-        return jsonify(reservations_list)
+        response = jsonify(reservations_list)
+        response.headers['Cache-Control'] = 'no-store'  # Desativa o cache para essa rota
+        return response
     except Exception as e:
         print(f"Erro: {e}")
         return jsonify({"error": "Erro ao recuperar as reservas"}), 500
