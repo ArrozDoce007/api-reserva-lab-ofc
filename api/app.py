@@ -92,8 +92,10 @@ def reservas_lab():
         cursor.execute(insert_query, (lab_name, date, time, time_fim, purpose, nome, matricula, "pendente", software_especifico, software_nome))
         db.commit()
 
+        formatted_date = datetime.strptime(date, '%Y-%m-%d').strftime('%d-%m-%Y')
+
         # Criar notificação após a reserva ser criada
-        notification_message = f"Sua reserva para {lab_name} em {date} foi solicitada e está pendente de aprovação."
+        notification_message = f"Sua reserva para {lab_name} em {formatted_date} foi solicitada e está pendente de aprovação."
         create_notification(matricula, notification_message)
 
         return "", 204
