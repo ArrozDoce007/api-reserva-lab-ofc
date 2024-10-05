@@ -202,7 +202,8 @@ def update_reservas(id):
         cursor.execute("SELECT matricula, lab_name, date FROM reservas WHERE id = %s", (id,))
         reservation = cursor.fetchone()
         if reservation:
-            notification_message = f"Sua reserva para {reservation['lab_name']} em {reservation['date']} foi {new_status}."
+            formatted_date = datetime.strptime(reservation['date'], '%Y-%m-%d').strftime('%d-%m-%Y')  # Formatar a data
+            notification_message = f"Sua reserva para {reservation['lab_name']} em {formatted_date} foi {new_status}."
             create_notification(reservation['matricula'], notification_message)
 
         return jsonify({"message": "Status da reserva atualizado com sucesso"}), 200
@@ -244,7 +245,9 @@ def rejeitar_pedido(id):
         cursor.execute("SELECT matricula, lab_name, date FROM reservas WHERE id = %s", (id,))
         reservation = cursor.fetchone()
         if reservation:
-            notification_message = f"Sua reserva para {reservation['lab_name']} em {reservation['date']} foi rejeitada. Motivo: {motivo}."
+            if reservation:
+            formatted_date = datetime.strptime(reservation['date'], '%Y-%m-%d').strftime('%d-%m-%Y')  # Formatar a data
+            notification_message = f"Sua reserva para {reservation['lab_name']} em {formatted_date} foi rejeitada. Motivo: {motivo}."
             create_notification(reservation['matricula'], notification_message)
 
         return jsonify({"message": "Pedido rejeitado com sucesso"}), 200
@@ -280,7 +283,8 @@ def update_reservas_aprj(id):
         cursor.execute("SELECT matricula, lab_name, date FROM reservas WHERE id = %s", (id,))
         reservation = cursor.fetchone()
         if reservation:
-            notification_message = f"Sua reserva para {reservation['lab_name']} em {reservation['date']} foi {new_status}."
+            formatted_date = datetime.strptime(reservation['date'], '%Y-%m-%d').strftime('%d-%m-%Y')  # Formatar a data
+            notification_message = f"Sua reserva para {reservation['lab_name']} em {formatted_date} foi {new_status}."
             create_notification(reservation['matricula'], notification_message)
 
         return jsonify({"message": "Status da reserva atualizado com sucesso"}), 200
