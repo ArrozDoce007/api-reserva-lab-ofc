@@ -12,8 +12,8 @@ def get_db_connection():
     try:
         db = mysql.connector.connect(
             host="192.168.1.13",
-            user="admin",
-            password="26042004",
+            user="root",
+            password="2004",
             database="lab_reservation"
         )
         return db
