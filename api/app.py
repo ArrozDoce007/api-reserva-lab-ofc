@@ -7,7 +7,7 @@ import pytz
 app = Flask(__name__)
 CORS(app)  # Habilita CORS para todas as rotas
 
-# Conexão com o banco de dados MySQL
+# Função para conectar ao banco de dados
 def get_db_connection():
     try:
         db = mysql.connector.connect(
@@ -33,29 +33,46 @@ def get_brasilia_time():
         print(f"Erro: {e}")
         return jsonify({"error": "Erro ao obter a data e hora atual"}), 500
 
-# Rota para logar na pagina inicial
+# Rota para logar na página inicial
 @app.route('/login', methods=['POST'])
 def login():
+    db = get_db_connection()
+    if db is None:
+        return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
+
+    cursor = db.cursor(dictionary=True)
     data = request.json
     matricula = data.get('matricula')
     senha = data.get('senha')
 
-    cursor.execute('SELECT nome, matricula, tipo_usuario FROM usuarios WHERE matricula = %s AND senha = %s', (matricula, senha))
-    user = cursor.fetchone()
+    try:
+        cursor.execute('SELECT nome, matricula, tipo_usuario FROM usuarios WHERE matricula = %s AND senha = %s', (matricula, senha))
+        user = cursor.fetchone()
 
-    if user:
-        return jsonify({
-            'success': True,
-            'nome': user['nome'],
-            'matricula': user['matricula'],
-            'tipo_usuario': user['tipo_usuario']
-        })
-    else:
-        return jsonify({'success': False, 'message': 'Matrícula ou senha inválidos'}), 401
+        if user:
+            return jsonify({
+                'success': True,
+                'nome': user['nome'],
+                'matricula': user['matricula'],
+                'tipo_usuario': user['tipo_usuario']
+            })
+        else:
+            return jsonify({'success': False, 'message': 'Matrícula ou senha inválidos'}), 401
+    except Exception as e:
+        print(f"Erro: {e}")
+        return jsonify({"error": "Erro ao realizar o login"}), 500
+    finally:
+        cursor.close()
+        db.close()
 
 # Rota para fazer a reserva
 @app.route('/reserve', methods=['POST'])
 def reservas_lab():
+    db = get_db_connection()
+    if db is None:
+        return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
+
+    cursor = db.cursor()
     try:
         data = request.json
         lab_name = data.get('labName')
@@ -75,14 +92,13 @@ def reservas_lab():
         cursor.execute(insert_query, (lab_name, date, time, time_fim, purpose, nome, matricula, "pendente", software_especifico, software_nome))
         db.commit()
 
-        # Criar notificação para o usuário
-        notification_message = f"Sua reserva para {lab_name} em {date} foi solicitada e está pendente de aprovação."
-        create_notification(matricula, notification_message)
-
         return "", 204
     except Exception as e:
         print(f"Erro: {e}")
         return jsonify({"error": "Erro ao processar a reserva"}), 500
+    finally:
+        cursor.close()
+        db.close()
 
 # Rota para obter o reserva geral
 @app.route('/reserve/status/geral', methods=['GET'])
