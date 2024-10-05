@@ -173,6 +173,11 @@ def get_rejeicao(pedido_id):
 # Rota para cancelar solicitação
 @app.route('/reserve/<int:id>', methods=['PUT'])
 def update_reservas(id):
+    db = get_db_connection()
+    if db is None:
+        return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
+
+    cursor = db.cursor(dictionary=True)
     try:
         data = request.json
         new_status = data.get('status')
@@ -197,10 +202,18 @@ def update_reservas(id):
         return jsonify({"message": "Status da reserva atualizado com sucesso"}), 200
     except Exception as e:
         return jsonify({"error": f"Erro ao atualizar a reserva: {str(e)}"}), 500
+    finally:
+        cursor.close()
+        db.close()
 
 # Rota para rejeitar um pedido
 @app.route('/rejeitar/pedido/<int:id>', methods=['POST'])
 def rejeitar_pedido(id):
+    db = get_db_connection()
+    if db is None:
+        return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
+
+    cursor = db.cursor(dictionary=True)
     try:
         data = request.json
         motivo = data.get('motivo')
@@ -230,12 +243,19 @@ def rejeitar_pedido(id):
 
         return jsonify({"message": "Pedido rejeitado com sucesso"}), 200
     except Exception as e:
-        print(f"Erro: {e}")
         return jsonify({"error": "Erro ao rejeitar o pedido"}), 500
+    finally:
+        cursor.close()
+        db.close()
 
 # Rota para aprovar
 @app.route('/aprovar/pedido/<int:id>', methods=['PUT'])
 def update_reservas_aprj(id):
+    db = get_db_connection()
+    if db is None:
+        return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
+
+    cursor = db.cursor(dictionary=True)
     try:
         data = request.json
         new_status = data.get('status')
@@ -260,6 +280,9 @@ def update_reservas_aprj(id):
         return jsonify({"message": "Status da reserva atualizado com sucesso"}), 200
     except Exception as e:
         return jsonify({"error": f"Erro ao atualizar a reserva: {str(e)}"}), 500
+    finally:
+        cursor.close()
+        db.close()
 
 # Função auxiliar para criar notificações
 def create_notification(user_matricula, message):
@@ -273,6 +296,11 @@ def create_notification(user_matricula, message):
 # Rota para obter notificações do usuário
 @app.route('/notifications/<string:matricula>', methods=['GET'])
 def get_notifications(matricula):
+    db = get_db_connection()
+    if db is None:
+        return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
+
+    cursor = db.cursor(dictionary=True)
     try:
         query = "SELECT id, message, created_at, is_read FROM notifications WHERE user_matricula = %s ORDER BY created_at DESC"
         cursor.execute(query, (matricula,))
@@ -281,10 +309,18 @@ def get_notifications(matricula):
     except Exception as e:
         print(f"Erro: {e}")
         return jsonify({"error": "Erro ao recuperar as notificações"}), 500
+    finally:
+        cursor.close()
+        db.close()
 
 # Rota para marcar notificações como lidas
 @app.route('/notifications/read', methods=['POST'])
 def mark_notifications_read():
+    db = get_db_connection()
+    if db is None:
+        return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
+
+    cursor = db.cursor()
     try:
         data = request.json
         notification_ids = data.get('notification_ids', [])
@@ -301,10 +337,18 @@ def mark_notifications_read():
     except Exception as e:
         print(f"Erro: {e}")
         return jsonify({"error": "Erro ao marcar notificações como lidas"}), 500
+    finally:
+        cursor.close()
+        db.close()
 
 # Rota para limpar todas as notificações do usuário
 @app.route('/notifications/clear/<string:matricula>', methods=['DELETE'])
 def clear_notifications(matricula):
+    db = get_db_connection()
+    if db is None:
+        return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
+
+    cursor = db.cursor()
     try:
         delete_query = "DELETE FROM notifications WHERE user_matricula = %s"
         cursor.execute(delete_query, (matricula,))
@@ -313,6 +357,9 @@ def clear_notifications(matricula):
     except Exception as e:
         print(f"Erro: {e}")
         return jsonify({"error": "Erro ao limpar as notificações"}), 500
+    finally:
+        cursor.close()
+        db.close()
 
 if __name__ == '__main__':
     app.run(debug=True)
