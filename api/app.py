@@ -245,7 +245,6 @@ def rejeitar_pedido(id):
         cursor.execute("SELECT matricula, lab_name, date FROM reservas WHERE id = %s", (id,))
         reservation = cursor.fetchone()
         if reservation:
-            if reservation:
             formatted_date = datetime.strptime(reservation['date'], '%Y-%m-%d').strftime('%d-%m-%Y')  # Formatar a data
             notification_message = f"Sua reserva para {reservation['lab_name']} em {formatted_date} foi rejeitada. Motivo: {motivo}."
             create_notification(reservation['matricula'], notification_message)
