@@ -66,7 +66,6 @@ def login():
         db.close()
 
 # Rota para fazer a reserva
-# Rota para fazer a reserva
 @app.route('/reserve', methods=['POST'])
 def reservas_lab():
     db = get_db_connection()
@@ -94,7 +93,7 @@ def reservas_lab():
         db.commit()
 
         # Criar notificação após a reserva ser criada
-        notification_message = f"Sua reserva para {lab_name} em {date} das {time} às {time_fim} foi criada com sucesso."
+        notification_message = f"Sua reserva para {lab_name} em {date} foi solicitada com sucesso."
         create_notification(matricula, notification_message)
 
         return "", 204
