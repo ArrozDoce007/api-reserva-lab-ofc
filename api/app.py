@@ -1,4 +1,4 @@
-`132w    4from flask import Flask, request, jsonify, make_response
+from flask import Flask, request, jsonify, make_response
 from flask_cors import CORS
 import mysql.connector
 from datetime import datetime
@@ -166,15 +166,19 @@ def get_reservas_por_matricula():
 # Rota para obter o motivo de rejeição
 @app.route('/rejeicoes/<int:pedido_id>', methods=['GET'])
 def get_rejeicao(pedido_id):
-    cursor = db.cursor(dictionary=True)
-    query = "SELECT motivo FROM rejeicoes WHERE pedido_id = %s"
-    cursor.execute(query, (pedido_id,))
-    result = cursor.fetchone()
+    db = get_db_connection()
+    try:
+        cursor = db.cursor(dictionary=True)
+        query = "SELECT motivo FROM rejeicoes WHERE pedido_id = %s"
+        cursor.execute(query, (pedido_id,))
+        result = cursor.fetchone()
 
-    if result:
-        return jsonify(result)
-    else:
-        return jsonify({"error": "Motivo de rejeição não encontrado"}), 404
+        if result:
+            return jsonify(result)
+        else:
+            return jsonify({"error": "Motivo de rejeição não encontrado"}), 404
+    except mysql.connector.Error as err:
+        return jsonify({"error": f"Erro no banco de dados: {str(err)}"}), 500
 
 # Rota para cancelar solicitação
 @app.route('/reserve/<int:id>', methods=['PUT'])
