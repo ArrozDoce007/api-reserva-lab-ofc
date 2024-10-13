@@ -5,7 +5,7 @@ gunicorn
 jsonify
 datetime
 pytz
-werkzeug.utils
+werkzeug
 secure_filename
 os
 hashlib
