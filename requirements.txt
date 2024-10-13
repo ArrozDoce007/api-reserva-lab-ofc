@@ -6,6 +6,5 @@ jsonify
 datetime
 pytz
 werkzeug
-secure_filename
 os
 hashlib
