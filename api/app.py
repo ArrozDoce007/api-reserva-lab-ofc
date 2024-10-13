@@ -1,30 +1,19 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, make_response
 from flask_cors import CORS
-from datetime import datetime
-from werkzeug.utils import secure_filename
 import mysql.connector
-import os
+from datetime import datetime
 import pytz
-import hashlib
 
 app = Flask(__name__)
 CORS(app)  # Habilita CORS para todas as rotas
-app.config['UPLOAD_FOLDER'] = os.path.join('testes', 'home', 'img')  # Defina o diretório de upload
-
-# Verifica se o diretório de uploads existe, se não existir, cria
-if not os.path.exists(app.config['UPLOAD_FOLDER']):
-    os.makedirs(app.config['UPLOAD_FOLDER'])
-    
-# Armazena hashes das requisições já processadas
-processed_requests = set()
 
 # Função para conectar ao banco de dados
 def get_db_connection():
     try:
         db = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="2004",
+            host="database-1.c9ec8o0ioxuo.us-east-2.rds.amazonaws.com",
+            user="admin",
+            password="26042004",
             database="lab_reservation"
         )
         return db
@@ -72,178 +61,6 @@ def login():
     except Exception as e:
         print(f"Erro: {e}")
         return jsonify({"error": "Erro ao realizar o login"}), 500
-    finally:
-        cursor.close()
-        db.close()
-        
-# Rota para obter os laboratórios
-@app.route('/laboratorios', methods=['GET'])
-def get_laboratorios():
-    db = get_db_connection()
-    if db is None:
-        return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
-
-    cursor = db.cursor(dictionary=True)
-    try:
-        query = "SELECT id, name, capacity, description, image FROM Laboratorios"
-        cursor.execute(query)
-        laboratorios = cursor.fetchall()
-        return jsonify(laboratorios)
-    except Exception as e:
-        print(f"Erro: {e}")
-        return jsonify({"error": "Erro ao recuperar os laboratórios"}), 500
-    finally:
-        cursor.close()
-        db.close()
-
-# Rota para criar laboratórios/salas     
-@app.route('/laboratorios/criar', methods=['POST'])
-def criar_sala():
-    if 'roomImage' not in request.files:
-        return jsonify({'message': 'Imagem não fornecida'}), 400
-    
-    room_image = request.files['roomImage']
-    room_name = request.form.get('roomName')
-    room_capacity = request.form.get('roomCapacity')
-    room_description = request.form.get('roomDescription')
-
-    # Gera um hash único da requisição
-    request_data = f"{room_name}_{room_capacity}_{room_description}_{room_image.filename}"
-    request_hash = hashlib.md5(request_data.encode()).hexdigest()
-    
-    if request_hash in processed_requests:
-        return jsonify({'message': 'Sala já criada!'}), 400  # Requisição duplicada
-
-    processed_requests.add(request_hash)
-
-    # Verifica se o nome da sala já existe
-    db = get_db_connection()  # Conexão ao banco de dados
-    if db is None:
-        return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
-
-    cursor = db.cursor(dictionary=True)
-    
-    try:
-        cursor.execute('SELECT COUNT(*) FROM laboratorios WHERE name = %s', (room_name,))
-        exists = cursor.fetchone()['COUNT(*)']
-        
-        if exists > 0:
-            return jsonify({'message': 'Já existe uma sala com este nome. Por favor, escolha outro nome.'}), 400
-    except Exception as e:
-        return jsonify({'message': 'Erro ao verificar nome da sala. Tente novamente.'}), 500
-    finally:
-        cursor.close()
-
-    if room_image and room_image.filename != '':
-        filename = secure_filename(room_image.filename)
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-
-        # Verifica se o arquivo já existe
-        if os.path.exists(filepath):
-            return jsonify({'message': 'Já existe um laboratório com a mesma imagem. Por favor, altere o nome da imagem.'}), 400
-        
-        # Salvar a imagem
-        try:
-            # Cria o diretório de uploads se não existir
-            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-            # Salva a imagem no diretório de uploads
-            room_image.save(filepath)
-        except Exception as e:
-            return jsonify({'message': 'Erro ao criar sala. Tente novamente.'}), 500
-        
-        # Defina o caminho que será salvo no banco de dados
-        db_image_path = f'./img/{filename}'
-
-        # Inserir dados no banco de dados
-        db = get_db_connection()  # Conexão ao banco de dados
-        if db is None:
-            return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
-
-        cursor = db.cursor(dictionary=True)
-        
-        try:
-            cursor.execute('INSERT INTO laboratorios (name, capacity, description, image) VALUES (%s, %s, %s, %s)',
-                           (room_name, room_capacity, room_description, db_image_path))
-            db.commit()
-            return jsonify({'message': 'Sala criada com sucesso!'}), 201
-        except Exception as e:
-            return jsonify({'message': 'Erro ao criar sala. Tente novamente.'}), 500
-        finally:
-            cursor.close()
-            db.close()
-    else:
-        return jsonify({'message': 'Erro ao criar sala. Tente novamente.'}), 400
-    
-# Rota para editar uma sala
-@app.route('/laboratorios/editar/<int:lab_id>', methods=['PUT'])
-def edit_lab(lab_id):
-    db = get_db_connection()
-    if db is None:
-        return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
-
-    cursor = db.cursor()
-    data = request.json
-    name = data.get('name')
-    capacity = data.get('capacity')
-    description = data.get('description')
-
-    try:
-        cursor.execute("""
-            UPDATE Laboratorios
-            SET name = %s, capacity = %s, description = %s
-            WHERE id = %s
-        """, (name, capacity, description, lab_id))
-        
-        db.commit()
-
-        if cursor.rowcount == 0:
-            return jsonify({'error': 'Sala não encontrada'}), 404
-        
-        return jsonify({'message': 'Sala atualizada com sucesso!'}), 200
-    except Exception as e:
-        print(f"Erro: {e}")
-        return jsonify({"error": "Erro ao atualizar a sala"}), 500
-    finally:
-        cursor.close()
-        db.close()
-
-# Rota para deletar uma sala
-@app.route('/laboratorios/deletar/<int:lab_id>', methods=['DELETE'])
-def delete_lab(lab_id):
-    db = get_db_connection()
-    if db is None:
-        return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
-
-    cursor = db.cursor(dictionary=True)
-
-    try:
-        # Primeiro, busque o laboratório para obter o caminho da imagem
-        cursor.execute("SELECT image FROM laboratorios WHERE id = %s", (lab_id,))
-        lab = cursor.fetchone()
-
-        if lab is None:
-            return jsonify({'error': 'Sala não encontrada'}), 404
-
-        # Armazene o caminho da imagem para exclusão
-        image_path = lab['image']
-
-        # Execute a exclusão no banco de dados
-        cursor.execute("DELETE FROM laboratorios WHERE id = %s", (lab_id,))
-        db.commit()
-
-        # Remova a imagem do diretório
-        full_image_path = os.path.join(app.config['UPLOAD_FOLDER'], os.path.basename(image_path))
-
-        if os.path.exists(full_image_path):
-            os.remove(full_image_path)
-            print(f"Imagem removida: {full_image_path}")  # Log para verificar se a imagem foi removida
-        else:
-            print(f"Imagem não encontrada: {full_image_path}")  # Log para verificar se a imagem existe
-
-        return jsonify({'message': 'Sala excluída com sucesso!'}), 200
-    except Exception as e:
-        print(f"Erro ao excluir a sala: {e}")  # Log de erro
-        return jsonify({"error": "Erro ao excluir a sala"}), 500
     finally:
         cursor.close()
         db.close()
