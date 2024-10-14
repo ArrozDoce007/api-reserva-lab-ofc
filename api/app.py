@@ -31,11 +31,11 @@ def allowed_file(filename):
 # Função de upload de arquivos para o S3
 def upload_to_s3(file_obj, bucket_name, file_name):
     try:
+        # Faz o upload do arquivo para o S3 sem a ACL
         s3_client.upload_fileobj(
             file_obj,
             bucket_name,
-            file_name,
-            ExtraArgs={'ACL': 'public-read'}  # Define o arquivo como público
+            file_name
         )
         # Retorna a URL pública da imagem
         file_url = f"https://{bucket_name}.s3.amazonaws.com/{file_name}"
