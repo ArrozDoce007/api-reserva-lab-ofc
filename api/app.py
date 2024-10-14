@@ -14,6 +14,10 @@ app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), '..', 'sta
 # Verifica se o diretório de uploads existe, se não existir, cria
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
+
+def allowed_file(filename):
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
     
 # Armazena hashes das requisições já processadas
 processed_requests = set()
@@ -135,24 +139,24 @@ def criar_sala():
         cursor.close()
 
     if room_image and room_image.filename != '':
+        if not allowed_file(room_image.filename):
+            return jsonify({'message': 'Arquivo não permitido. Por favor, envie uma imagem válida.'}), 400
+
         filename = secure_filename(room_image.filename)
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
 
-        # Verifica se o arquivo já existe
         if os.path.exists(filepath):
             return jsonify({'message': 'Já existe um laboratório com a mesma imagem. Por favor, altere o nome da imagem.'}), 400
         
-        # Salvar a imagem
         try:
-            # Cria o diretório de uploads se não existir
             os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-            # Salva a imagem no diretório de uploads
             room_image.save(filepath)
         except Exception as e:
+            print(e)  # Verifique o erro
             return jsonify({'message': 'Erro ao criar sala. Tente novamente.'}), 500
         
         # Defina o caminho que será salvo no banco de dados
-        db_image_path = f'/static/uploads/{filename}'  # Caminho relativo para acessar a imagem
+        db_image_path = f'static/uploads/{filename}'  # Caminho relativo para acessar a imagem
 
         # Inserir dados no banco de dados
         db = get_db_connection()  # Conexão ao banco de dados
@@ -167,6 +171,7 @@ def criar_sala():
             db.commit()
             return jsonify({'message': 'Sala criada com sucesso!'}), 201
         except Exception as e:
+            print(e)  # Verifique o erro
             return jsonify({'message': 'Erro ao criar sala. Tente novamente.'}), 500
         finally:
             cursor.close()
