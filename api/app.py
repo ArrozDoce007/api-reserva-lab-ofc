@@ -199,7 +199,7 @@ def criar_sala():
             cursor.close()
             db.close()
     else:
-        return jsonify({'message': 'Arquivo não permitido. Por favor, envie uma imagem válida.'}), 400
+        return jsonify({'message': 'Arquivo não permitido. Por favor, envie uma imagem válida (PNG, JPG ou JPEG).'}), 400
 
 # Rota para editar uma sala
 @app.route('/laboratorios/editar/<int:lab_id>', methods=['PUT'])
