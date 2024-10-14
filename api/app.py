@@ -150,7 +150,7 @@ def criar_sala():
 
             cursor = db.cursor(dictionary=True)
             cursor.execute(
-                'INSERT INTO laboratorios (name, capacity, description, image) VALUES (%s, %s, %s, %s)',
+                'INSERT INTO Laboratorios (name, capacity, description, image) VALUES (%s, %s, %s, %s)',
                 (room_name, room_capacity, room_description, s3_url)
             )
             db.commit()
