@@ -35,7 +35,7 @@ s3_client = boto3.client(
 )
 
 def allowed_file(filename):
-    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def upload_to_s3(file_obj, bucket_name, file_name):
@@ -199,7 +199,7 @@ def criar_sala():
             cursor.close()
             db.close()
     else:
-        return jsonify({'message': 'Arquivo não permitido. Por favor, envie uma imagem válida (PNG, JPG ou JPEG).'}), 400
+        return jsonify({'message': 'Arquivo não permitido. Por favor, envie uma imagem válida (PNG, JPG, JPEG OU GIF).'}), 400
 
 # Rota para editar uma sala
 @app.route('/laboratorios/editar/<int:lab_id>', methods=['PUT'])
