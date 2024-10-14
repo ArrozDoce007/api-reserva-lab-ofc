@@ -162,10 +162,10 @@ def criar_sala():
             # Usa o lock para proteger a seção crítica
             with sala_lock:
                 # Verifica se a sala já existe
-                cursor.execute('SELECT id FROM Laboratorios WHERE name = %s', (room_name,))
-                existing_room = cursor.fetchone()
-                
-                if existing_room:
+                cursor.execute('SELECT COUNT(*) FROM Laboratorios WHERE name = %s', (room_name,))
+                exists = cursor.fetchone()[0]  # Modificado para obter o primeiro elemento
+
+                if exists > 0:
                     return jsonify({'message': 'Já existe uma sala com este nome. Por favor, escolha outro nome.'}), 400
 
                 # Verifica se a imagem já existe no S3
