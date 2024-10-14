@@ -113,6 +113,26 @@ def login():
         db.close()
         
 # Rota para obter os laboratórios
+@app.route('/laboratorios', methods=['GET'])
+def get_laboratorios():
+    db = get_db_connection()
+    if db is None:
+        return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
+
+    cursor = db.cursor(dictionary=True)
+    try:
+        query = "SELECT id, name, capacity, description, image FROM Laboratorios"
+        cursor.execute(query)
+        laboratorios = cursor.fetchall()
+        return jsonify(laboratorios)
+    except Exception as e:
+        print(f"Erro: {e}")
+        return jsonify({"error": "Erro ao recuperar os laboratórios"}), 500
+    finally:
+        cursor.close()
+        db.close()
+
+# Rota para criar laboratórios/salas
 @app.route('/laboratorios/criar', methods=['POST'])
 def criar_sala():
     if 'roomImage' not in request.files or request.files['roomImage'].filename == '':
