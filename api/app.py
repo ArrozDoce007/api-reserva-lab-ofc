@@ -222,24 +222,16 @@ def delete_lab(lab_id):
     cursor = db.cursor(dictionary=True)
 
     try:
-        # Primeiro, busque o laboratório para obter o caminho da imagem
+        # Primeiro, busque o laboratório para garantir que ele existe
         cursor.execute("SELECT image FROM Laboratorios WHERE id = %s", (lab_id,))
         lab = cursor.fetchone()
 
         if lab is None:
             return jsonify({'error': 'Sala não encontrada'}), 404
 
-        # Armazene o caminho da imagem para exclusão
-        image_path = lab['image']
-
         # Execute a exclusão no banco de dados
         cursor.execute("DELETE FROM Laboratorios WHERE id = %s", (lab_id,))
         db.commit()
-
-        # Remova a imagem do diretório
-        full_image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_path)
-        if os.path.exists(full_image_path):
-            os.remove(full_image_path)
 
         return jsonify({'message': 'Sala deletada com sucesso!'}), 200
     except Exception as e:
