@@ -77,6 +77,9 @@ def get_brasilia_time():
         print(f"Erro: {e}")
         return jsonify({"error": "Erro ao obter a data e hora atual"}), 500
 
+# Armazena hashes das requisições já processadas
+processed_requests = set()
+
 # Rota para logar na página inicial
 @app.route('/login', methods=['POST'])
 def login():
@@ -140,13 +143,20 @@ def criar_sala():
     room_capacity = request.form.get('roomCapacity')
     room_description = request.form.get('roomDescription')
 
+    # Gera um hash único da requisição
+    request_data = f"{room_name}_{room_capacity}_{room_description}_{room_image.filename}"
+    request_hash = hashlib.md5(request_data.encode()).hexdigest()
+
+    # Verifica se a requisição já foi processada
+    if request_hash in processed_requests:
+        return jsonify({'message': 'Sala já criada!'}), 400  # Requisição duplicada
+
+    processed_requests.add(request_hash)
+
     # Verifica se o arquivo é permitido
     if room_image and allowed_file(room_image.filename):
         # Formata o nome da imagem para substituir espaços
         filename = format_filename(secure_filename(room_image.filename))
-
-        # Gera um hash para o nome da sala (usado apenas para controle interno)
-        room_name_hash = hashlib.md5(room_name.encode()).hexdigest()
 
         # Conexão ao banco de dados
         db = get_db_connection()
