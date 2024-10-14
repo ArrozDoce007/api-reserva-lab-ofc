@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from datetime import datetime
 from werkzeug.utils import secure_filename
+from botocore.exceptions import NoCredentialsError, ClientErro
 import mysql.connector
 import os
 import pytz
@@ -37,6 +38,15 @@ def upload_to_s3(file_obj, bucket_name, file_name):
         return file_url
     except Exception as e:
         print(f"Erro ao fazer upload para o S3: {e}")
+        return None
+
+def delete_from_s3(bucket_name, object_key):
+    s3_client = boto3.client('s3')
+    try:
+        response = s3_client.delete_object(Bucket=bucket_name, Key=object_key)
+        return response
+    except ClientError as e:
+        print(f"Erro ao deletar o objeto: {e}")
         return None
 
 def check_image_exists(bucket_name, filename):
@@ -236,17 +246,15 @@ def delete_lab(lab_id):
         if lab is None:
             return jsonify({'error': 'Sala não encontrada'}), 404
 
-        # Obtenha o nome da imagem para deletar do S3
-        image_key = lab['image'].split('/')[-1]  # Pega o nome do arquivo da URL da imagem
-
-        # Delete a imagem do S3
-        delete_response = delete_from_s3(AWS_S3_BUCKET_NAME, image_key)
-        if delete_response is None:
-            return jsonify({'error': 'Erro ao deletar a imagem do S3'}), 500
+        # Obtenha o nome da imagem do S3
+        image_key = lab['image']  # Supondo que a URL da imagem seja o `image_key`
 
         # Execute a exclusão no banco de dados
         cursor.execute("DELETE FROM Laboratorios WHERE id = %s", (lab_id,))
         db.commit()
+
+        # Deletar a imagem do S3
+        delete_from_s3(AWS_S3_BUCKET_NAME, image_key)
 
         return jsonify({'message': 'Sala deletada com sucesso!'}), 200
     except Exception as e:
