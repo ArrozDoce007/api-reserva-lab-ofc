@@ -14,53 +14,30 @@ CORS(app)
 # Variável para controlar o estado da criação da sala
 creating_room_lock = threading.Lock()
 
-# Configurações do S3 - credenciais diretamente no código
+# Configurações do S3
 AWS_ACCESS_KEY_ID = 'AKIA46ZDE6JYQL3P3EHE'
 AWS_SECRET_ACCESS_KEY = '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'
 AWS_S3_BUCKET_NAME = 'reserva-lab-nassau'
 
-# Configuração do cliente S3
 s3_client = boto3.client(
     's3',
     aws_access_key_id=AWS_ACCESS_KEY_ID,
-    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-    region_name='us-east-2'  # Altere para a região do seu bucket S3
+    aws_secret_access_key=AWS_SECRET_ACCESS_KEY
 )
 
 def allowed_file(filename):
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# Função de upload de arquivos para o S3
-def upload_to_s3(file_obj, bucket_name, file_name):
-    try:
-        # Faz o upload do arquivo para o S3 sem a ACL
-        s3_client.upload_fileobj(
-            file_obj,
-            bucket_name,
-            file_name
-        )
-        # Retorna a URL pública da imagem
-        file_url = f"https://{bucket_name}.s3.amazonaws.com/{file_name}"
-        return file_url
-    except Exception as e:
-        print(f"Erro ao fazer upload para o S3: {e}")
-        return None
-
-def check_image_exists(bucket_name, filename):
-    try:
-        s3_client.head_object(Bucket=bucket_name, Key=filename)
-        return True  # A imagem já existe
-    except Exception as e:
-        if e.response['Error']['Code'] == '404':
-            return False  # A imagem não existe
-        else:
-            print(f'Erro ao verificar a imagem no S3: {e}')
-            return False
-
-# Função para substituir espaços por underscore
 def format_filename(filename):
-    return filename.replace(' ', '_')
+    return filename.replace(" ", "_")  # Substitui espaços por underscores
+
+def check_image_exists(bucket_name, image_name):
+    try:
+        s3_client.head_object(Bucket=bucket_name, Key=image_name)
+        return True
+    except Exception:
+        return False
     
 # Armazena hashes das requisições já processadas
 processed_requests = set()
