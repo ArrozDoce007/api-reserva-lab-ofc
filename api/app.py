@@ -113,26 +113,6 @@ def login():
         db.close()
         
 # Rota para obter os laboratórios
-@app.route('/laboratorios', methods=['GET'])
-def get_laboratorios():
-    db = get_db_connection()
-    if db is None:
-        return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
-
-    cursor = db.cursor(dictionary=True)
-    try:
-        query = "SELECT id, name, capacity, description, image FROM Laboratorios"
-        cursor.execute(query)
-        laboratorios = cursor.fetchall()
-        return jsonify(laboratorios)
-    except Exception as e:
-        print(f"Erro: {e}")
-        return jsonify({"error": "Erro ao recuperar os laboratórios"}), 500
-    finally:
-        cursor.close()
-        db.close()
-    
-# Rota para criar laboratórios/salas
 @app.route('/laboratorios/criar', methods=['POST'])
 def criar_sala():
     if 'roomImage' not in request.files or request.files['roomImage'].filename == '':
@@ -150,14 +130,14 @@ def criar_sala():
         if db is None:
             return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
 
-        cursor = db.cursor(dictionary=True)
+        cursor = db.cursor()
         try:
-            # Verifica se o arquivo é permitido
-            # Adiciona o lock aqui apenas para a criação de sala
+            # Usa o lock para proteger a seção crítica
             with sala_lock:
                 # Verifica se a sala já existe
                 cursor.execute('SELECT COUNT(*) FROM Laboratorios WHERE name = %s', (room_name,))
-                exists = cursor.fetchone()['COUNT(*)']
+                exists = cursor.fetchone()[0]  # Modificado para obter o primeiro elemento
+
                 if exists > 0:
                     return jsonify({'message': 'Já existe uma sala com este nome. Por favor, escolha outro nome.'}), 400
 
