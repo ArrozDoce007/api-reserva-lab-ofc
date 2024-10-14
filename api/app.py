@@ -6,6 +6,7 @@ import mysql.connector
 import os
 import pytz
 import hashlib
+import subprocess
 
 app = Flask(__name__, static_folder='static')  # Configura o diretório estático
 CORS(app)  # Habilita CORS para todas as rotas
