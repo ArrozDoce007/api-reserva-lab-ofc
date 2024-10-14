@@ -9,7 +9,7 @@ import hashlib
 
 app = Flask(__name__, static_folder='static')  # Configura o diretório estático
 CORS(app)  # Habilita CORS para todas as rotas
-app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')  # Defina o diretório de upload
+app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), '..', 'static', 'uploads') # Defina o diretório de upload
 
 # Verifica se o diretório de uploads existe, se não existir, cria
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
