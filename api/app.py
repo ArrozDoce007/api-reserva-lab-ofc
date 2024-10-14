@@ -133,7 +133,6 @@ def get_laboratorios():
         db.close()
     
 # Rota para criar laboratórios/salas
-# Rota para criar laboratórios/salas
 @app.route('/laboratorios/criar', methods=['POST'])
 def criar_sala():
     if 'roomImage' not in request.files or request.files['roomImage'].filename == '':
