@@ -6,11 +6,36 @@ import mysql.connector
 import os
 import pytz
 import hashlib
-import subprocess
+import requests
+import base64
 
 app = Flask(__name__, static_folder='static')  # Configura o diretório estático
 CORS(app)  # Habilita CORS para todas as rotas
-app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), '..', 'static', 'uploads') # Defina o diretório de upload
+GITHUB_TOKEN = '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'
+REPO_OWNER = 'ArrozDoce007'  # Substitua pelo seu nome de usuário do GitHub
+REPO_NAME = 'api-reserva-lab-ofc'  # Nome do repositório
+IMAGE_PATH = 'static/uploads'  # Caminho no repositório para salvar a imagem
+
+# Função para fazer upload da imagem para o GitHub
+def upload_image_to_github(image_path, filename):
+    url = f'https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/contents/{IMAGE_PATH}/{filename}'
+    
+    with open(image_path, 'rb') as image_file:
+        content = base64.b64encode(image_file.read()).decode('utf-8')
+
+    data = {
+        'message': f'Add {filename}',
+        'content': content,
+        'branch': 'main'  # ou o nome da branch que você está usando
+    }
+    
+    headers = {
+        'Authorization': f'token {GITHUB_TOKEN}',
+        'Accept': 'application/vnd.github.v3+json'
+    }
+
+    response = requests.put(url, json=data, headers=headers)
+    return response
 
 # Verifica se o diretório de uploads existe, se não existir, cria
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
@@ -145,19 +170,25 @@ def criar_sala():
             return jsonify({'message': 'Arquivo não permitido. Por favor, envie uma imagem válida.'}), 400
 
         filename = secure_filename(room_image.filename)
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        local_image_path = os.path.join(IMAGE_PATH, filename)
 
-        if os.path.exists(filepath):
+        if os.path.exists(local_image_path):
             return jsonify({'message': 'Já existe um laboratório com a mesma imagem. Por favor, altere o nome da imagem.'}), 400
         
         try:
-            room_image.save(filepath)  # Salvar a imagem no diretório de uploads
+            room_image.save(local_image_path)  # Salvar a imagem no diretório de uploads
+            
+            # Enviar a imagem para o GitHub
+            response = upload_image_to_github(local_image_path, filename)
+            if response.status_code != 201:
+                return jsonify({'message': 'Erro ao enviar a imagem para o GitHub.'}), 500
+            
         except Exception as e:
             print(f'Erro ao salvar a imagem: {e}')  # Verifique o erro
             return jsonify({'message': 'Erro ao criar sala. Tente novamente.'}), 500
         
         # Defina o caminho que será salvo no banco de dados
-        db_image_path = f'static/uploads/{filename}'  # Caminho relativo para acessar a imagem
+        db_image_path = f'{IMAGE_PATH}/{filename}'  # Caminho relativo para acessar a imagem
 
         # Inserir dados no banco de dados
         db = get_db_connection()  # Conexão ao banco de dados
