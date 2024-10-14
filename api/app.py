@@ -11,9 +11,6 @@ import boto3
 app = Flask(__name__)
 CORS(app)
 
-# Armazena hashes das requisições já processadas
-processed_requests = set()
-
 # Configurações do S3
 AWS_ACCESS_KEY_ID = 'AKIA46ZDE6JYQL3P3EHE'
 AWS_SECRET_ACCESS_KEY = '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'
@@ -143,16 +140,6 @@ def criar_sala():
     room_capacity = request.form.get('roomCapacity')
     room_description = request.form.get('roomDescription')
 
-    # Gera um hash único da requisição
-    request_data = f"{room_name}_{room_capacity}_{room_description}_{room_image.filename}"
-    request_hash = hashlib.md5(request_data.encode()).hexdigest()
-
-    # Verifica se a requisição já foi processada
-    if request_hash in processed_requests:
-        return jsonify({'message': 'Sala já criada!'}), 400  # Requisição duplicada
-
-    processed_requests.add(request_hash)
-
     # Verifica se o arquivo é permitido
     if room_image and allowed_file(room_image.filename):
         # Formata o nome da imagem para substituir espaços
@@ -188,6 +175,7 @@ def criar_sala():
             return jsonify({'message': 'Sala criada com sucesso!', 'image_url': image_url}), 201
         except Exception as e:
             print(f'Erro ao inserir no banco: {e}')
+            db.rollback()  # Reverte a transação em caso de erro
             return jsonify({'message': 'Erro ao criar sala. Tente novamente.'}), 500
         finally:
             cursor.close()
