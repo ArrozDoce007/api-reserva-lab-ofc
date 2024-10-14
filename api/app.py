@@ -246,15 +246,9 @@ def delete_lab(lab_id):
         if lab is None:
             return jsonify({'error': 'Sala não encontrada'}), 404
 
-        # Obtenha o nome da imagem do S3
-        image_key = lab['image']  # Supondo que a URL da imagem seja o `image_key`
-
         # Execute a exclusão no banco de dados
         cursor.execute("DELETE FROM Laboratorios WHERE id = %s", (lab_id,))
         db.commit()
-
-        # Deletar a imagem do S3
-        delete_from_s3(AWS_S3_BUCKET_NAME, image_key)
 
         return jsonify({'message': 'Sala deletada com sucesso!'}), 200
     except Exception as e:
