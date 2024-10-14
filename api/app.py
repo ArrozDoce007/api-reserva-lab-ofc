@@ -40,15 +40,6 @@ def upload_to_s3(file_obj, bucket_name, file_name):
         print(f"Erro ao fazer upload para o S3: {e}")
         return None
 
-def delete_from_s3(bucket_name, object_key):
-    s3_client = boto3.client('s3')
-    try:
-        response = s3_client.delete_object(Bucket=bucket_name, Key=object_key)
-        return response
-    except ClientError as e:
-        print(f"Erro ao deletar o objeto: {e}")
-        return None
-
 def check_image_exists(bucket_name, filename):
     try:
         s3_client.head_object(Bucket=bucket_name, Key=filename)
