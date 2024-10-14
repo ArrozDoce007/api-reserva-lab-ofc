@@ -128,7 +128,7 @@ def criar_sala():
     cursor = db.cursor(dictionary=True)
     
     try:
-        cursor.execute('SELECT COUNT(*) FROM Laboratorios WHERE name = %s', (room_name,))
+        cursor.execute('SELECT COUNT(*) FROM laboratorios WHERE name = %s', (room_name,))
         exists = cursor.fetchone()['COUNT(*)']
         
         if exists > 0:
@@ -166,7 +166,7 @@ def criar_sala():
         cursor = db.cursor(dictionary=True)
         
         try:
-            cursor.execute('INSERT INTO Laboratorios (name, capacity, description, image) VALUES (%s, %s, %s, %s)',
+            cursor.execute('INSERT INTO laboratorios (name, capacity, description, image) VALUES (%s, %s, %s, %s)',
                            (room_name, room_capacity, room_description, db_image_path))
             db.commit()
             return jsonify({'message': 'Sala criada com sucesso!'}), 201
@@ -177,6 +177,7 @@ def criar_sala():
             cursor.close()
             db.close()
     else:
+        print('Erro: Imagem não recebida ou nome do arquivo vazio.')
         return jsonify({'message': 'Erro ao criar sala. Tente novamente.'}), 400
     
 # Rota para editar uma sala
