@@ -27,12 +27,19 @@ def allowed_file(filename):
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def upload_to_s3(file, bucket_name, filename):
+def upload_to_s3(file_obj, bucket_name, file_name):
     try:
-        s3_client.upload_fileobj(file, bucket_name, filename)
-        return f'https://{bucket_name}.s3.amazonaws.com/{filename}'  # URL do objeto
+        # Faz o upload do arquivo para o S3 sem a ACL
+        s3_client.upload_fileobj(
+            file_obj,
+            bucket_name,
+            file_name
+        )
+        # Retorna a URL pública da imagem
+        file_url = f"https://{bucket_name}.s3.amazonaws.com/{file_name}"
+        return file_url
     except Exception as e:
-        print(f'Erro ao fazer upload para o S3: {e}')
+        print(f"Erro ao fazer upload para o S3: {e}")
         return None
 
 def check_image_exists(bucket_name, filename):
