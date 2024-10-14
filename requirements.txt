@@ -7,3 +7,4 @@ datetime
 pytz
 werkzeug
 python-dotenv
+requests
