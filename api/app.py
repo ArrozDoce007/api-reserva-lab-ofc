@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from datetime import datetime
 from werkzeug.utils import secure_filename
+from vercel_blob import VercelBlob
 import mysql.connector
 import os
 import pytz
@@ -9,6 +10,7 @@ import hashlib
 
 app = Flask(__name__)
 CORS(app)  # Habilita CORS para todas as rotas
+blob_client = VercelBlob(os.environ.get('BLOB_READ_WRITE_TOKEN'))
 app.config['UPLOAD_FOLDER'] = os.path.join('home', 'img')  # Defina o diretório de upload
 
 # Verifica se o diretório de uploads existe, se não existir, cria
