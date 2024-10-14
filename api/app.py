@@ -8,10 +8,13 @@ import pytz
 import hashlib
 import boto3
 import threading
+import logging
 
 app = Flask(__name__)
 CORS(app)
 
+
+logging.basicConfig(level=logging.INFO)
 creating_room_lock = threading.Lock()
 
 # Configurações do S3
@@ -135,6 +138,8 @@ def get_laboratorios():
 # Rota para criar laboratórios/salas
 @app.route('/laboratorios/criar', methods=['POST'])
 def criar_sala():
+    logging.info("Requisição recebida para criar sala.")
+    
     if 'roomImage' not in request.files or request.files['roomImage'].filename == '':
         return jsonify({'message': 'Imagem não fornecida ou inválida'}), 400
     
@@ -143,49 +148,45 @@ def criar_sala():
     room_capacity = request.form.get('roomCapacity')
     room_description = request.form.get('roomDescription')
 
-    # Verifica se o arquivo é permitido
     if room_image and allowed_file(room_image.filename):
-        # Formata o nome da imagem para substituir espaços
         filename = format_filename(secure_filename(room_image.filename))
 
-        with creating_room_lock:  # Usar lock para evitar chamadas simultâneas
-            # Conexão ao banco de dados
+        with creating_room_lock:
             db = get_db_connection()
             if db is None:
                 return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
 
             cursor = db.cursor(dictionary=True)
             try:
-                # Verifica se a sala já existe
                 cursor.execute('SELECT COUNT(*) FROM Laboratorios WHERE name = %s', (room_name,))
                 exists = cursor.fetchone()['COUNT(*)']
+                logging.info(f"Sala {room_name} já existe: {exists > 0}")
+                
                 if exists > 0:
                     return jsonify({'message': 'Já existe uma sala com este nome. Por favor, escolha outro nome.'}), 400
                 
-                # Verifica se a imagem já existe no S3
                 if check_image_exists(AWS_S3_BUCKET_NAME, filename):
                     return jsonify({'message': 'Já existe uma imagem com este nome. Por favor, escolha outro nome.'}), 400
 
-                # Faz upload da imagem para o S3
                 image_url = upload_to_s3(room_image, AWS_S3_BUCKET_NAME, filename)
                 
                 if image_url is None:
                     return jsonify({'message': 'Erro ao fazer upload da imagem para o S3'}), 500
 
-                # Inserir dados no banco de dados
                 cursor.execute('INSERT INTO Laboratorios (name, capacity, description, image) VALUES (%s, %s, %s, %s)',
                                (room_name, room_capacity, room_description, image_url))
                 db.commit()
+                logging.info(f"Sala {room_name} criada com sucesso.")
                 return jsonify({'message': 'Sala criada com sucesso!', 'image_url': image_url}), 201
             except Exception as e:
-                print(f'Erro ao inserir no banco: {e}')
+                logging.error(f'Erro ao inserir no banco: {e}')
                 return jsonify({'message': 'Erro ao criar sala. Tente novamente.'}), 500
             finally:
                 cursor.close()
                 db.close()
     else:
         return jsonify({'message': 'Arquivo não permitido. Por favor, envie uma imagem válida.'}), 400
-    
+
 # Rota para editar uma sala
 @app.route('/laboratorios/editar/<int:lab_id>', methods=['PUT'])
 def edit_lab(lab_id):
