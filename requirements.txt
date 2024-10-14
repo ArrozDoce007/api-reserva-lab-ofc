@@ -6,4 +6,3 @@ jsonify
 datetime
 pytz
 werkzeug
-python-dotenv
