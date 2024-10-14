@@ -9,7 +9,7 @@ import hashlib
 
 app = Flask(__name__, static_folder='static')  # Configura o diretório estático
 CORS(app)  # Habilita CORS para todas as rotas
-app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), '..', 'static', 'uploads') # Defina o diretório de upload
+app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), 'static', 'uploads') # Defina o diretório de upload
 
 # Verifica se o diretório de uploads existe, se não existir, cria
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
@@ -134,6 +134,7 @@ def criar_sala():
         if exists > 0:
             return jsonify({'message': 'Já existe uma sala com este nome. Por favor, escolha outro nome.'}), 400
     except Exception as e:
+        print(f'Erro ao verificar nome da sala: {e}')
         return jsonify({'message': 'Erro ao verificar nome da sala. Tente novamente.'}), 500
     finally:
         cursor.close()
@@ -149,10 +150,9 @@ def criar_sala():
             return jsonify({'message': 'Já existe um laboratório com a mesma imagem. Por favor, altere o nome da imagem.'}), 400
         
         try:
-            os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-            room_image.save(filepath)
+            room_image.save(filepath)  # Salvar a imagem no diretório de uploads
         except Exception as e:
-            print(e)  # Verifique o erro
+            print(f'Erro ao salvar a imagem: {e}')  # Verifique o erro
             return jsonify({'message': 'Erro ao criar sala. Tente novamente.'}), 500
         
         # Defina o caminho que será salvo no banco de dados
@@ -171,7 +171,7 @@ def criar_sala():
             db.commit()
             return jsonify({'message': 'Sala criada com sucesso!'}), 201
         except Exception as e:
-            print(e)  # Verifique o erro
+            print(f'Erro ao inserir no banco: {e}')  # Verifique o erro
             return jsonify({'message': 'Erro ao criar sala. Tente novamente.'}), 500
         finally:
             cursor.close()
