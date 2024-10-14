@@ -7,4 +7,3 @@ datetime
 pytz
 werkzeug
 python-dotenv
-subprocess
