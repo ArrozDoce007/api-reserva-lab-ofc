@@ -12,6 +12,8 @@ import threading
 app = Flask(__name__)
 CORS(app)
 
+creating_room_lock = threading.Lock()
+
 # Configurações do S3
 AWS_ACCESS_KEY_ID = 'AKIA46ZDE6JYQL3P3EHE'
 AWS_SECRET_ACCESS_KEY = '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'
@@ -132,7 +134,6 @@ def get_laboratorios():
     
 # Rota para criar laboratórios/salas
 @app.route('/laboratorios/criar', methods=['POST'])
-creating_room_lock = threading.Lock()
 def criar_sala():
     if 'roomImage' not in request.files or request.files['roomImage'].filename == '':
         return jsonify({'message': 'Imagem não fornecida ou inválida'}), 400
