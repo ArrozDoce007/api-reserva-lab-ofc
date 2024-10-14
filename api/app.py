@@ -223,7 +223,7 @@ def delete_lab(lab_id):
 
     try:
         # Primeiro, busque o laboratório para obter o caminho da imagem
-        cursor.execute("SELECT image FROM laboratorios WHERE id = %s", (lab_id,))
+        cursor.execute("SELECT image FROM Laboratorios WHERE id = %s", (lab_id,))
         lab = cursor.fetchone()
 
         if lab is None:
@@ -233,7 +233,7 @@ def delete_lab(lab_id):
         image_path = lab['image']
 
         # Execute a exclusão no banco de dados
-        cursor.execute("DELETE FROM laboratorios WHERE id = %s", (lab_id,))
+        cursor.execute("DELETE FROM Laboratorios WHERE id = %s", (lab_id,))
         db.commit()
 
         # Remova a imagem do diretório
