@@ -52,7 +52,7 @@ def check_image_exists(bucket_name, filename):
 
 # Função para substituir espaços por underscore
 def format_filename(filename):
-    return filename.replace(' ', '_')
+    return filename.replace(' ', '_').replace('-', '_')
 
 # Função para conectar ao banco de dados
 def get_db_connection():
