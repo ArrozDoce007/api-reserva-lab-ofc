@@ -101,6 +101,45 @@ def get_laboratorios():
         db.close()
 
 # Rota para criar laboratórios/salas     
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+from datetime import datetime
+from werkzeug.utils import secure_filename
+import mysql.connector
+import os
+import pytz
+import hashlib
+
+app = Flask(__name__, static_folder='static')  # Configura o diretório estático
+CORS(app)  # Habilita CORS para todas as rotas
+app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), 'static', 'uploads') # Defina o diretório de upload
+
+# Verifica se o diretório de uploads existe, se não existir, cria
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.makedirs(app.config['UPLOAD_FOLDER'])
+
+def allowed_file(filename):
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    
+# Armazena hashes das requisições já processadas
+processed_requests = set()
+
+# Função para conectar ao banco de dados
+def get_db_connection():
+    try:
+        db = mysql.connector.connect(
+            host="database-1.c9ec8o0ioxuo.us-east-2.rds.amazonaws.com",
+            user="admin",
+            password="26042004",
+            database="lab_reservation"
+        )
+        return db
+    except mysql.connector.Error as err:
+        print(f"Erro ao conectar ao banco de dados: {err}")
+        return None
+
+# Rota para criar laboratórios/salas     
 @app.route('/laboratorios/criar', methods=['POST'])
 def criar_sala():
     if 'roomImage' not in request.files:
@@ -128,7 +167,7 @@ def criar_sala():
     cursor = db.cursor(dictionary=True)
     
     try:
-        cursor.execute('SELECT COUNT(*) FROM Laboratorios WHERE name = %s', (room_name,))
+        cursor.execute('SELECT COUNT(*) FROM laboratorios WHERE name = %s', (room_name,))
         exists = cursor.fetchone()['COUNT(*)']
         
         if exists > 0:
@@ -166,7 +205,7 @@ def criar_sala():
         cursor = db.cursor(dictionary=True)
         
         try:
-            cursor.execute('INSERT INTO Laboratorios (name, capacity, description, image) VALUES (%s, %s, %s, %s)',
+            cursor.execute('INSERT INTO laboratorios (name, capacity, description, image) VALUES (%s, %s, %s, %s)',
                            (room_name, room_capacity, room_description, db_image_path))
             db.commit()
             return jsonify({'message': 'Sala criada com sucesso!'}), 201
@@ -177,7 +216,6 @@ def criar_sala():
             cursor.close()
             db.close()
     else:
-        print('Erro: Imagem não recebida ou nome do arquivo vazio.')
         return jsonify({'message': 'Erro ao criar sala. Tente novamente.'}), 400
     
 # Rota para editar uma sala
