@@ -160,16 +160,6 @@ def criar_sala():
         # Formata o nome da imagem para substituir espaços
         filename = format_filename(secure_filename(room_image.filename))
 
-        # Verifica se a imagem já existe no S3
-        if check_image_exists(AWS_S3_BUCKET_NAME, filename):
-            return jsonify({'message': 'Já existe uma imagem com este nome. Por favor, escolha outro nome.'}), 400
-
-        # Faz upload da imagem para o S3
-        image_url = upload_to_s3(room_image, AWS_S3_BUCKET_NAME, filename)
-        
-        if image_url is None:
-            return jsonify({'message': 'Erro ao fazer upload da imagem para o S3'}), 500
-
         # Conexão ao banco de dados
         db = get_db_connection()
         if db is None:
@@ -182,6 +172,16 @@ def criar_sala():
             exists = cursor.fetchone()['COUNT(*)']
             if exists > 0:
                 return jsonify({'message': 'Já existe uma sala com este nome. Por favor, escolha outro nome.'}), 400
+            
+            # Verifica se a imagem já existe no S3
+            if check_image_exists(AWS_S3_BUCKET_NAME, filename):
+                return jsonify({'message': 'Já existe uma imagem com este nome. Por favor, escolha outro nome.'}), 400
+
+            # Faz upload da imagem para o S3
+            image_url = upload_to_s3(room_image, AWS_S3_BUCKET_NAME, filename)
+            
+            if image_url is None:
+                return jsonify({'message': 'Erro ao fazer upload da imagem para o S3'}), 500
 
             # Inserir dados no banco de dados
             cursor.execute('INSERT INTO Laboratorios (name, capacity, description, image) VALUES (%s, %s, %s, %s)',
