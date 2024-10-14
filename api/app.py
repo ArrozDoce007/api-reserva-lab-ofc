@@ -107,6 +107,10 @@ def criar_sala():
     room_capacity = request.form.get('roomCapacity')
     room_description = request.form.get('roomDescription')
 
+    # Upload image to Vercel Blob
+    blob = blob_client.put(room_image.filename, room_image)
+    image_url = blob.url
+
     # Gera um hash único da requisição
     request_data = f"{room_name}_{room_capacity}_{room_description}_{room_image.filename}"
     request_hash = hashlib.md5(request_data.encode()).hexdigest()
