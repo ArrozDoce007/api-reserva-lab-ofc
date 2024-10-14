@@ -11,6 +11,9 @@ import boto3
 app = Flask(__name__)
 CORS(app)
 
+# Armazena hashes das requisições já processadas
+processed_requests = set()
+
 # Configurações do S3
 AWS_ACCESS_KEY_ID = 'AKIA46ZDE6JYQL3P3EHE'
 AWS_SECRET_ACCESS_KEY = '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'
@@ -76,9 +79,6 @@ def get_brasilia_time():
     except Exception as e:
         print(f"Erro: {e}")
         return jsonify({"error": "Erro ao obter a data e hora atual"}), 500
-
-# Armazena hashes das requisições já processadas
-processed_requests = set()
 
 # Rota para logar na página inicial
 @app.route('/login', methods=['POST'])
