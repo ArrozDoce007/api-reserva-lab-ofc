@@ -43,6 +43,17 @@ def upload_to_s3(file_obj, bucket_name, file_name):
     except Exception as e:
         print(f"Erro ao fazer upload para o S3: {e}")
         return None
+
+def check_image_exists(bucket_name, filename):
+    try:
+        s3_client.head_object(Bucket=bucket_name, Key=filename)
+        return True  # A imagem já existe
+    except Exception as e:
+        if e.response['Error']['Code'] == '404':
+            return False  # A imagem não existe
+        else:
+            print(f'Erro ao verificar a imagem no S3: {e}')
+            return False
     
 # Armazena hashes das requisições já processadas
 processed_requests = set()
@@ -143,6 +154,10 @@ def criar_sala():
     # Verifica se o arquivo é permitido
     if room_image and allowed_file(room_image.filename):
         filename = secure_filename(room_image.filename)
+
+        # Verifica se a imagem já existe no S3
+        if check_image_exists(AWS_S3_BUCKET_NAME, filename):
+            return jsonify({'message': 'Já existe uma imagem com este nome. Por favor, escolha outro nome.'}), 400
 
         # Faz upload da imagem para o S3
         image_url = upload_to_s3(room_image, AWS_S3_BUCKET_NAME, filename)
