@@ -132,6 +132,7 @@ def get_laboratorios():
     
 # Rota para criar laboratórios/salas
 @app.route('/laboratorios/criar', methods=['POST'])
+creating_room_lock = threading.Lock()
 def criar_sala():
     if 'roomImage' not in request.files or request.files['roomImage'].filename == '':
         return jsonify({'message': 'Imagem não fornecida ou inválida'}), 400
