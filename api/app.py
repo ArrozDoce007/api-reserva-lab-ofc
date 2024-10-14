@@ -20,21 +20,35 @@ s3_client = boto3.client(
     's3',
     aws_access_key_id=AWS_ACCESS_KEY_ID,
     aws_secret_access_key=AWS_SECRET_ACCESS_KEY
+    region_name='us-east-2'
 )
 
 def allowed_file(filename):
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def format_filename(filename):
-    return filename.replace(" ", "_")  # Substitui espaços por underscores
-
-def check_image_exists(bucket_name, image_name):
+def upload_to_s3(file, bucket_name, filename):
     try:
-        s3_client.head_object(Bucket=bucket_name, Key=image_name)
-        return True
-    except Exception:
-        return False
+        s3_client.upload_fileobj(file, bucket_name, filename)
+        return f'https://{bucket_name}.s3.amazonaws.com/{filename}'  # URL do objeto
+    except Exception as e:
+        print(f'Erro ao fazer upload para o S3: {e}')
+        return None
+
+def check_image_exists(bucket_name, filename):
+    try:
+        s3_client.head_object(Bucket=bucket_name, Key=filename)
+        return True  # A imagem já existe
+    except Exception as e:
+        if e.response['Error']['Code'] == '404':
+            return False  # A imagem não existe
+        else:
+            print(f'Erro ao verificar a imagem no S3: {e}')
+            return False
+
+# Função para substituir espaços por underscore
+def format_filename(filename):
+    return filename.replace(' ', '_')
     
 # Armazena hashes das requisições já processadas
 processed_requests = set()
