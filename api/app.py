@@ -54,6 +54,10 @@ def check_image_exists(bucket_name, filename):
         else:
             print(f'Erro ao verificar a imagem no S3: {e}')
             return False
+
+# Função para substituir espaços por underscore
+def format_filename(filename):
+    return filename.replace(' ', '_')
     
 # Armazena hashes das requisições já processadas
 processed_requests = set()
@@ -153,7 +157,8 @@ def criar_sala():
 
     # Verifica se o arquivo é permitido
     if room_image and allowed_file(room_image.filename):
-        filename = secure_filename(room_image.filename)
+        # Formata o nome da imagem para substituir espaços
+        filename = format_filename(secure_filename(room_image.filename))
 
         # Verifica se a imagem já existe no S3
         if check_image_exists(AWS_S3_BUCKET_NAME, filename):
