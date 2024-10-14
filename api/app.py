@@ -177,7 +177,6 @@ def criar_sala():
             cursor.close()
             db.close()
     else:
-        print('Erro: Imagem não recebida ou nome do arquivo vazio.')
         return jsonify({'message': 'Erro ao criar sala. Tente novamente.'}), 400
     
 # Rota para editar uma sala
