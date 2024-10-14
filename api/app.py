@@ -50,6 +50,13 @@ def check_image_exists(bucket_name, filename):
             print(f'Erro ao verificar a imagem no S3: {e}')
             return False
 
+def delete_from_s3(bucket_name, file_name):
+    try:
+        s3_client.delete_object(Bucket=bucket_name, Key=file_name)
+        print(f"Imagem {file_name} deletada do S3 com sucesso.")
+    except Exception as e:
+        print(f"Erro ao deletar a imagem do S3: {e}")
+
 # Função para substituir espaços por underscore
 def format_filename(filename):
     return filename.replace(' ', '_').replace('-', '_')
@@ -235,6 +242,15 @@ def delete_lab(lab_id):
 
         if lab is None:
             return jsonify({'error': 'Sala não encontrada'}), 404
+
+        # Obtenha a URL da imagem do S3
+        image_url = lab['image']
+
+        # Extrair o nome do objeto (chave) da URL
+        image_key = image_url.split('/')[-1]
+
+        # Deletar a imagem do S3
+        delete_from_s3(AWS_S3_BUCKET_NAME, image_key)
 
         # Execute a exclusão no banco de dados
         cursor.execute("DELETE FROM Laboratorios WHERE id = %s", (lab_id,))
