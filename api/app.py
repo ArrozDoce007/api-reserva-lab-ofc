@@ -272,6 +272,11 @@ def edit_lab(lab_id):
         cursor.close()
         db.close()
 
+def get_old_image_url(cursor, lab_id):
+    cursor.execute("SELECT image FROM Laboratorios WHERE id = %s", (lab_id,))
+    result = cursor.fetchone()
+    return result[0] if result else None
+
 # Rota para deletar laboratórios/salas
 @app.route('/laboratorios/deletar/<int:lab_id>', methods=['DELETE'])
 def delete_lab(lab_id):
