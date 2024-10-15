@@ -219,13 +219,13 @@ def edit_lab(lab_id):
         # Verifica se a sala existe antes de tentar atualizar
         cursor.execute("SELECT COUNT(*) FROM Laboratorios WHERE id = %s", (lab_id,))
         if cursor.fetchone()[0] == 0:
-            return jsonify({'error': 'Sala não encontrada'}), 404
+            return jsonify({'message': 'Sala não encontrada'}), 404
 
         # Verifica se o novo nome já existe (exceto para a sala que está sendo editada)
         cursor.execute("SELECT COUNT(*) FROM Laboratorios WHERE name = %s AND id != %s", (name, lab_id))
         if cursor.fetchone()[0] > 0:
             print("Erro: Nome da sala já existe.")  # Log de depuração
-            return jsonify({'error': 'Já existe uma sala com esse nome. Por favor, escolha outro nome.'}), 400
+            return jsonify({'message': 'Já existe uma sala com esse nome. Por favor, escolha outro nome.'}), 400
 
         # Atualiza os dados da sala
         cursor.execute("""
@@ -242,7 +242,7 @@ def edit_lab(lab_id):
             filename = format_filename(secure_filename(room_image.filename))
             if check_image_exists(AWS_S3_BUCKET_NAME, filename):
                 print("Erro: Imagem já existe no S3.")  # Log de depuração
-                return jsonify({'error': 'Já existe uma imagem com este nome. Por favor, escolha outro nome.'}), 400
+                return jsonify({'message': 'Já existe uma imagem com este nome. Por favor, escolha outro nome.'}), 400
             
             if old_image_url:
                 # Extrai o nome do arquivo da URL antiga para excluir do S3
