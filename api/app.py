@@ -151,12 +151,15 @@ def get_laboratorios():
 @app.route('/laboratorios/criar', methods=['POST'])
 def criar_sala():
     if 'roomImage' not in request.files or request.files['roomImage'].filename == '':
+        print("Imagem não fornecida ou inválida")
         return jsonify({'message': 'Imagem não fornecida ou inválida'}), 400
     
     room_image = request.files['roomImage']
     room_name = request.form.get('roomName')
     room_capacity = request.form.get('roomCapacity')
     room_description = request.form.get('roomDescription')
+
+    print(f"Nome da imagem: {room_image.filename}, Tipo: {room_image.content_type}")  # Log para depuração
 
     if room_image and allowed_file(room_image.filename):
         filename = format_filename(secure_filename(room_image.filename))
@@ -198,7 +201,8 @@ def criar_sala():
         finally:
             cursor.close()
             db.close()
-    else:
+     else:
+        print(f"Arquivo não permitido: {room_image.filename}")  # Log para depuração
         return jsonify({'message': 'Arquivo não permitido. Por favor, envie uma imagem válida (PNG, JPG, JPEG OU GIF).'}), 400
 
 # Rota para editar uma sala
