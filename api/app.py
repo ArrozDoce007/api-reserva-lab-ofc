@@ -249,6 +249,8 @@ def edit_lab(lab_id):
             
             # Faz upload da nova imagem
             image_url = upload_to_s3(room_image, AWS_S3_BUCKET_NAME, filename)  # Faz upload da nova imagem
+            if image_url is None:
+                return jsonify({'message': 'Erro ao fazer upload da nova imagem. Tente novamente.'}), 500
             
             # Atualiza o banco de dados com a nova imagem
             cursor.execute("""
@@ -260,17 +262,15 @@ def edit_lab(lab_id):
         db.commit()
         return jsonify({'message': 'Sala atualizada com sucesso!'}), 200
 
+    except mysql.connector.Error as err:
+        print(f"Erro no banco de dados: {err}")
+        return jsonify({"message": "Erro ao acessar o banco de dados. Por favor, tente novamente."}), 500
     except Exception as e:
         print(f"Erro: {e}")
-        return jsonify({"message": "Erro ao atualizar a sala. Por favor, tente novamente."}), 500
+        return jsonify({"message": "Erro desconhecido ao atualizar a sala. Por favor, tente novamente."}), 500
     finally:
         cursor.close()
         db.close()
-
-def get_old_image_url(cursor, lab_id):
-    cursor.execute("SELECT image FROM Laboratorios WHERE id = %s", (lab_id,))
-    result = cursor.fetchone()
-    return result[0] if result else None
 
 # Rota para deletar laboratórios/salas
 @app.route('/laboratorios/deletar/<int:lab_id>', methods=['DELETE'])
