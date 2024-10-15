@@ -3,9 +3,7 @@ from flask_cors import CORS
 from datetime import datetime
 from werkzeug.utils import secure_filename
 import mysql.connector
-import os
 import pytz
-import hashlib
 import boto3
 import threading
 
