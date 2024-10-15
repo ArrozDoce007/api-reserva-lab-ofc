@@ -201,7 +201,7 @@ def criar_sala():
     else:
         return jsonify({'message': 'Arquivo não permitido. Por favor, envie uma imagem válida (PNG, JPG OU JPEG).'}), 400
 
-# Rota para editar uma sala
+# Rota para editar laboratórios/salas
 @app.route('/laboratorios/editar/<int:lab_id>', methods=['PUT'])
 def edit_lab(lab_id):
     db = get_db_connection()
@@ -221,11 +221,6 @@ def edit_lab(lab_id):
         if cursor.fetchone()[0] == 0:
             return jsonify({'error': 'Sala não encontrada'}), 404
 
-        # Verifica se o novo nome já existe (exceto para a sala que está sendo editada)
-        cursor.execute("SELECT COUNT(*) FROM Laboratorios WHERE name = %s AND id != %s", (name, lab_id))
-        if cursor.fetchone()[0] > 0:
-            return jsonify({'error': 'Já existe uma sala com esse nome. Por favor, escolha outro nome.'}), 400
-
         # Atualiza os dados da sala
         cursor.execute("""
             UPDATE Laboratorios
@@ -236,18 +231,13 @@ def edit_lab(lab_id):
         # Se uma nova imagem foi enviada, faça o upload e atualize o campo de imagem
         if room_image:
             old_image_url = get_old_image_url(cursor, lab_id)  # Obter URL da imagem antiga
-            
-            # Verifica se a nova imagem já existe no S3
-            filename = format_filename(secure_filename(room_image.filename))
-            if check_image_exists2(AWS_S3_BUCKET_NAME, filename):
-                return jsonify({'error': 'Já existe uma imagem com este nome. Por favor, escolha outro nome.'}), 400
-            
             if old_image_url:
                 # Extrai o nome do arquivo da URL antiga para excluir do S3
                 old_filename = old_image_url.split('/')[-1]  # Obtém apenas o nome do arquivo
                 delete_from_s3(AWS_S3_BUCKET_NAME, old_filename)  # Exclui a imagem antiga do S3
             
-            # Faz upload da nova imagem
+            # Prepara o novo arquivo e faz o upload
+            filename = format_filename(secure_filename(room_image.filename))
             image_url = upload_to_s3(room_image, AWS_S3_BUCKET_NAME, filename)  # Faz upload da nova imagem
             
             # Atualiza o banco de dados com a nova imagem
@@ -272,17 +262,7 @@ def get_old_image_url(cursor, lab_id):
     result = cursor.fetchone()
     return result[0] if result else None
 
-def check_image_exists2(bucket_name, filename):
-    # Implementação para verificar se a imagem já existe no S3
-    # Você pode usar a biblioteca boto3 para isso
-    s3_client = boto3.client('s3')
-    try:
-        s3_client.head_object(Bucket=bucket_name, Key=filename)
-        return True
-    except botocore.exceptions.ClientError as e:
-        return False
-
-# Rota para deletar uma sala
+# Rota para deletar laboratórios/salas
 @app.route('/laboratorios/deletar/<int:lab_id>', methods=['DELETE'])
 def delete_lab(lab_id):
     db = get_db_connection()
