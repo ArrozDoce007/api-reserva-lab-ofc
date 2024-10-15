@@ -209,18 +209,36 @@ def edit_lab(lab_id):
         return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
 
     cursor = db.cursor()
-    data = request.json
+    data = request.form  # Alterado para request.form para lidar com FormData
+
     name = data.get('name')
     capacity = data.get('capacity')
     description = data.get('description')
+    room_image = request.files.get('roomImage')  # Captura a nova imagem, se fornecida
 
     try:
+        # Atualizar os dados da sala
         cursor.execute("""
             UPDATE Laboratorios
             SET name = %s, capacity = %s, description = %s
             WHERE id = %s
         """, (name, capacity, description, lab_id))
         
+        # Se uma nova imagem foi enviada, faça o upload e atualize o campo de imagem
+        if room_image:
+            old_image_url = get_old_image_url(cursor, lab_id)  # Obter URL da imagem antiga
+            if old_image_url:
+                delete_from_s3(AWS_S3_BUCKET_NAME, old_image_url)  # Exclui a imagem antiga do S3
+            filename = format_filename(secure_filename(room_image.filename))
+            image_url = upload_to_s3(room_image, AWS_S3_BUCKET_NAME, filename)  # Faz upload da nova imagem
+            
+            # Atualiza o banco de dados com a nova imagem
+            cursor.execute("""
+                UPDATE Laboratorios
+                SET image = %s
+                WHERE id = %s
+            """, (image_url, lab_id))
+
         db.commit()
 
         if cursor.rowcount == 0:
