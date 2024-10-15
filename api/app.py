@@ -65,6 +65,11 @@ def delete_from_s3(bucket_name, file_name):
     except Exception as e:
         print(f"Erro ao deletar a imagem do S3: {e}")
 
+def get_old_image_url(cursor, lab_id):
+    cursor.execute("SELECT image FROM Laboratorios WHERE id = %s", (lab_id,))
+    result = cursor.fetchone()
+    return result[0] if result else None
+
 # Função para substituir espaços por underscore
 def format_filename(filename):
     return filename.replace(' ', '_').replace('-', '_')
