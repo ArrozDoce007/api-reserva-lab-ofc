@@ -65,11 +65,6 @@ def delete_from_s3(bucket_name, file_name):
     except Exception as e:
         print(f"Erro ao deletar a imagem do S3: {e}")
 
-def get_old_image_url(cursor, lab_id):
-    cursor.execute("SELECT image FROM Laboratorios WHERE id = %s", (lab_id,))
-    result = cursor.fetchone()
-    return result[0] if result else None
-
 # Função para substituir espaços por underscore
 def format_filename(filename):
     return filename.replace(' ', '_').replace('-', '_')
@@ -214,26 +209,34 @@ def edit_lab(lab_id):
         return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
 
     cursor = db.cursor()
-    data = request.form  # Alterado para request.form para lidar com FormData
-
+    data = request.form  # Captura os dados do formulário
     name = data.get('name')
     capacity = data.get('capacity')
     description = data.get('description')
     room_image = request.files.get('roomImage')  # Captura a nova imagem, se fornecida
 
     try:
-        # Atualizar os dados da sala
+        # Verifica se a sala existe antes de tentar atualizar
+        cursor.execute("SELECT COUNT(*) FROM Laboratorios WHERE id = %s", (lab_id,))
+        if cursor.fetchone()[0] == 0:
+            return jsonify({'error': 'Sala não encontrada'}), 404
+
+        # Atualiza os dados da sala
         cursor.execute("""
             UPDATE Laboratorios
             SET name = %s, capacity = %s, description = %s
             WHERE id = %s
         """, (name, capacity, description, lab_id))
-        
+
         # Se uma nova imagem foi enviada, faça o upload e atualize o campo de imagem
         if room_image:
             old_image_url = get_old_image_url(cursor, lab_id)  # Obter URL da imagem antiga
             if old_image_url:
-                delete_from_s3(AWS_S3_BUCKET_NAME, old_image_url)  # Exclui a imagem antiga do S3
+                # Extrai o nome do arquivo da URL antiga para excluir do S3
+                old_filename = old_image_url.split('/')[-1]  # Obtém apenas o nome do arquivo
+                delete_from_s3(AWS_S3_BUCKET_NAME, old_filename)  # Exclui a imagem antiga do S3
+            
+            # Prepara o novo arquivo e faz o upload
             filename = format_filename(secure_filename(room_image.filename))
             image_url = upload_to_s3(room_image, AWS_S3_BUCKET_NAME, filename)  # Faz upload da nova imagem
             
@@ -246,9 +249,6 @@ def edit_lab(lab_id):
 
         db.commit()
 
-        if cursor.rowcount == 0:
-            return jsonify({'error': 'Sala não encontrada'}), 404
-        
         return jsonify({'message': 'Sala atualizada com sucesso!'}), 200
     except Exception as e:
         print(f"Erro: {e}")
@@ -256,6 +256,11 @@ def edit_lab(lab_id):
     finally:
         cursor.close()
         db.close()
+
+def get_old_image_url(cursor, lab_id):
+    cursor.execute("SELECT image FROM Laboratorios WHERE id = %s", (lab_id,))
+    result = cursor.fetchone()
+    return result[0] if result else None
 
 # Rota para deletar uma sala
 @app.route('/laboratorios/deletar/<int:lab_id>', methods=['DELETE'])
