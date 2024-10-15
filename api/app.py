@@ -177,7 +177,7 @@ def criar_sala():
                     return jsonify({'message': 'Já existe uma sala com este nome. Por favor, escolha outro nome.'}), 400
 
                 # Verifica se a imagem já existe no S3
-                if check_image_exists(AWS_S3_BUCKET_NAME, filename):
+                if check_image_exists2(AWS_S3_BUCKET_NAME, filename):
                     return jsonify({'message': 'Já existe uma imagem com este nome. Por favor, escolha outro nome.'}), 400
 
                 # Faz upload da imagem para o S3
@@ -239,7 +239,7 @@ def edit_lab(lab_id):
             
             # Verifica se a nova imagem já existe no S3
             filename = format_filename(secure_filename(room_image.filename))
-            if check_image_exists(AWS_S3_BUCKET_NAME, filename):
+            if check_image_exists2(AWS_S3_BUCKET_NAME, filename):
                 return jsonify({'error': 'Já existe uma imagem com este nome. Por favor, escolha outro nome.'}), 400
             
             if old_image_url:
@@ -271,6 +271,16 @@ def get_old_image_url(cursor, lab_id):
     cursor.execute("SELECT image FROM Laboratorios WHERE id = %s", (lab_id,))
     result = cursor.fetchone()
     return result[0] if result else None
+
+def check_image_exists2(bucket_name, filename):
+    # Implementação para verificar se a imagem já existe no S3
+    # Você pode usar a biblioteca boto3 para isso
+    s3_client = boto3.client('s3')
+    try:
+        s3_client.head_object(Bucket=bucket_name, Key=filename)
+        return True
+    except botocore.exceptions.ClientError as e:
+        return False
 
 # Rota para deletar uma sala
 @app.route('/laboratorios/deletar/<int:lab_id>', methods=['DELETE'])
