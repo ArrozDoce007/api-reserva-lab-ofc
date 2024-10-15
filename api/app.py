@@ -258,11 +258,11 @@ def edit_lab(lab_id):
             """, (image_url, lab_id))
 
         db.commit()
-
         return jsonify({'message': 'Sala atualizada com sucesso!'}), 200
+
     except Exception as e:
         print(f"Erro: {e}")
-        return jsonify({"error": "Erro ao atualizar a sala"}), 500
+        return jsonify({"error": "Erro ao atualizar a sala. Por favor, tente novamente."}), 500
     finally:
         cursor.close()
         db.close()
