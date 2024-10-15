@@ -210,9 +210,9 @@ def edit_lab(lab_id):
 
     cursor = db.cursor()
     data = request.form  # Captura os dados do formulário
-    name = data.get('name')
-    capacity = data.get('capacity')
-    description = data.get('description')
+    new_name = data.get('name')
+    new_capacity = data.get('capacity')
+    new_description = data.get('description')
     room_image = request.files.get('roomImage')  # Captura a nova imagem, se fornecida
 
     try:
@@ -221,23 +221,35 @@ def edit_lab(lab_id):
         if cursor.fetchone()[0] == 0:
             return jsonify({'error': 'Sala não encontrada'}), 404
 
+        # Verifica se o novo nome da sala já existe
+        if new_name:
+            cursor.execute("SELECT COUNT(*) FROM Laboratorios WHERE name = %s AND id != %s", (new_name, lab_id))
+            if cursor.fetchone()[0] > 0:
+                return jsonify({'message': 'Já existe uma sala com este nome. Por favor, escolha outro nome.'}), 400
+
         # Atualiza os dados da sala
         cursor.execute("""
             UPDATE Laboratorios
             SET name = %s, capacity = %s, description = %s
             WHERE id = %s
-        """, (name, capacity, description, lab_id))
+        """, (new_name, new_capacity, new_description, lab_id))
 
         # Se uma nova imagem foi enviada, faça o upload e atualize o campo de imagem
         if room_image:
+            # Prepara o novo arquivo
+            filename = format_filename(secure_filename(room_image.filename))
+
+            # Verifica se a imagem já existe no S3
+            if check_image_exists(AWS_S3_BUCKET_NAME, filename):
+                return jsonify({'message': 'Já existe uma imagem com este nome. Por favor, escolha outro nome.'}), 400
+
             old_image_url = get_old_image_url(cursor, lab_id)  # Obter URL da imagem antiga
             if old_image_url:
                 # Extrai o nome do arquivo da URL antiga para excluir do S3
                 old_filename = old_image_url.split('/')[-1]  # Obtém apenas o nome do arquivo
                 delete_from_s3(AWS_S3_BUCKET_NAME, old_filename)  # Exclui a imagem antiga do S3
             
-            # Prepara o novo arquivo e faz o upload
-            filename = format_filename(secure_filename(room_image.filename))
+            # Faz o upload da nova imagem
             image_url = upload_to_s3(room_image, AWS_S3_BUCKET_NAME, filename)  # Faz upload da nova imagem
             
             # Atualiza o banco de dados com a nova imagem
