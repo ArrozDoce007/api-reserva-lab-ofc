@@ -92,7 +92,7 @@ def get_brasilia_time():
     except Exception as e:
         print(f"Erro: {e}")
         return jsonify({"error": "Erro ao obter a data e hora atual"}), 500
-
+        
 # Rota para logar na página inicial
 @app.route('/login', methods=['POST'])
 def login():
@@ -110,11 +110,15 @@ def login():
         user = cursor.fetchone()
 
         if user:
+            tipo_usuario = user['tipo_usuario']
+            if tipo_usuario not in ['adm', 'user']:
+                return jsonify({'success': False, 'message': 'Seu cadastro já foi solicitado e está em análise'}), 403
+
             return jsonify({
                 'success': True,
                 'nome': user['nome'],
                 'matricula': user['matricula'],
-                'tipo_usuario': user['tipo_usuario']
+                'tipo_usuario': tipo_usuario
             })
         else:
             return jsonify({'success': False, 'message': 'Matrícula ou senha inválidos'}), 401
