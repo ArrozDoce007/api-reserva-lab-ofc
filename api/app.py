@@ -124,6 +124,41 @@ def login():
     finally:
         cursor.close()
         db.close()
+
+# Rota para cadastro de usuários
+@app.route('/cadastro', methods=['POST'])
+def cadastro():
+    db = get_db_connection()
+    if db is None:
+        return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
+
+    cursor = db.cursor(dictionary=True)
+    data = request.json
+    nome = data.get('nome')
+    matricula = data.get('matricula')
+    email = data.get('email')
+    senha = data.get('senha')
+
+    try:
+        # Verifica se a matrícula já existe
+        cursor.execute('SELECT * FROM usuarios WHERE matricula = %s', (matricula,))
+        if cursor.fetchone():
+            return jsonify({'success': False, 'message': 'Matrícula já cadastrada'}), 400
+
+        # Insere o novo usuário com tipo_usuario como NULL
+        cursor.execute(
+            'INSERT INTO usuarios (nome, matricula, email, senha, tipo_usuario) VALUES (%s, %s, %s, %s, %s)',
+            (nome, matricula, email, senha, None)
+        )
+        db.commit()
+
+        return jsonify({'success': True, 'message': 'Cadastro realizado com sucesso'})
+    except Exception as e:
+        print(f"Erro: {e}")
+        return jsonify({"error": "Erro ao realizar o cadastro"}), 500
+    finally:
+        cursor.close()
+        db.close()
         
 # Rota para obter os laboratórios
 @app.route('/laboratorios', methods=['GET'])
