@@ -148,7 +148,7 @@ def cadastro():
         # Insere o novo usuário com tipo_usuario como NULL
         cursor.execute(
             'INSERT INTO usuarios (nome, matricula, email, senha, tipo_usuario) VALUES (%s, %s, %s, %s, %s)',
-            (nome, matricula, email, senha, 'user_invalido')
+            (nome, matricula, email, senha, 'null')
         )
         db.commit()
 
