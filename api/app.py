@@ -351,6 +351,30 @@ def delete_lab(lab_id):
     finally:
         cursor.close()
         db.close()
+        
+# Rota para buscar usuarios
+@app.route('/usuarios', methods=['GET'])
+def get_usuarios():
+    db = get_db_connection()
+    if db is None:
+        return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
+
+    cursor = db.cursor(dictionary=True)
+
+    try:
+        cursor.execute('SELECT nome, matricula, email, tipo_usuario FROM usuarios')
+        usuarios = cursor.fetchall()
+
+        return jsonify({
+            'success': True,
+            'usuarios': usuarios
+        })
+    except Exception as e:
+        print(f"Erro: {e}")
+        return jsonify({"error": "Erro ao buscar os usuários"}), 500
+    finally:
+        cursor.close()
+        db.close()
 
 # Rota para fazer a reserva
 @app.route('/reserve', methods=['POST'])
