@@ -391,7 +391,7 @@ def get_usuarios():
     cursor = db.cursor(dictionary=True)
 
     try:
-        cursor.execute('SELECT nome, matricula, email, tipo_usuario FROM usuarios')
+        cursor.execute('SELECT * FROM usuarios')
         usuarios = cursor.fetchall()
 
         return jsonify({
