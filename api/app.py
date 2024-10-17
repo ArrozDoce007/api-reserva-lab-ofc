@@ -164,6 +164,35 @@ def cadastro():
         cursor.close()
         db.close()
         
+# Rota para deletar usuários
+@app.route('/usuarios/deletar/<int:user_id>', methods=['DELETE'])
+def deletar_usuario(user_id):
+    db = get_db_connection()
+    if db is None:
+        return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
+
+    cursor = db.cursor(dictionary=True)
+
+    try:
+        # Verifica se o usuário existe
+        cursor.execute('SELECT * FROM usuarios WHERE id = %s', (user_id,))
+        user = cursor.fetchone()
+
+        if not user:
+            return jsonify({'success': False, 'message': 'Usuário não encontrado'}), 404
+
+        # Exclui o usuário
+        cursor.execute('DELETE FROM usuarios WHERE id = %s', (user_id,))
+        db.commit()
+
+        return jsonify({'success': True, 'message': 'Usuário excluído com sucesso'}), 200
+    except Exception as e:
+        print(f"Erro: {e}")
+        return jsonify({"error": "Erro ao excluir o usuário"}), 500
+    finally:
+        cursor.close()
+        db.close()
+        
 # Rota para obter os laboratórios
 @app.route('/laboratorios', methods=['GET'])
 def get_laboratorios():
