@@ -216,6 +216,41 @@ def deletar_usuario(user_id):
     finally:
         cursor.close()
         db.close()
+
+# Rota para atualizar um usuário
+@app.route('/usuarios/atualizar/<int:user_id>', methods=['PUT'])
+def update_usuario(user_id):
+    db = get_db_connection()
+    if db is None:
+        return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
+
+    cursor = db.cursor(dictionary=True)
+    
+    # Obtém os dados do corpo da requisição
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Dados não fornecidos"}), 400
+    
+    # A partir daqui, você pode especificar quais campos deseja atualizar
+    tipo_usuario = data.get('tipo_usuario')
+    
+    try:
+        # Atualiza o tipo de usuário
+        cursor.execute('UPDATE usuarios SET tipo_usuario = %s WHERE id = %s', (tipo_usuario, user_id))
+        
+        # Verifica se a atualização foi feita
+        if cursor.rowcount == 0:
+            return jsonify({"error": "Usuário não encontrado"}), 404
+
+        db.commit()
+
+        return jsonify({"success": True, "message": "Usuário atualizado com sucesso."})
+    except Exception as e:
+        print(f"Erro: {e}")
+        return jsonify({"error": "Erro ao atualizar o usuário"}), 500
+    finally:
+        cursor.close()
+        db.close()
         
 # Rota para obter os laboratórios
 @app.route('/laboratorios', methods=['GET'])
