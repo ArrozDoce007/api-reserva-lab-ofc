@@ -195,7 +195,7 @@ def cadastro():
                 <h1>Olá {nome}</h1>
                 <p>Seu cadastro ao sistema de reserva de salas foi solicitado com sucesso.</p>
                 <p>Aguarde a aprovação do administrador.</p>
-                <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;/>
+                <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
             </body>
         </html>
         """
