@@ -83,7 +83,7 @@ def send_email(to_email, subject, body):
     message["From"] = sender_email
     message["To"] = to_email
     message["Subject"] = subject
-    message.attach(MIMEText(body, "plain"))
+    message.attach(MIMEText(body, "html"))
 
     # Enviar e-mail
     try:
@@ -188,12 +188,12 @@ def cadastro():
         subject = "Cadastro solicitado"
         body = f"""
         <html>
-          <body>
-            <p>Olá {nome},</p>
-            <p>Seu cadastro ao sistema de reserva de salas foi solicitado com sucesso.</p>
-            <p>Aguarde a aprovação do administrador.</p>
-            <img src="https://logo.uninassau.edu.br/img/svg/uninassau.svg" alt="Logo UNINASSAU" style="width:200px; height:auto;">
-          </body>
+            <body>
+                <h1>Olá {nome},</h1>
+                <p>Seu cadastro ao sistema de reserva de salas foi solicitado com sucesso.</p>
+                <p>Aguarde a aprovação do administrador.</p>
+                <img src="https://logo.uninassau.edu.br/img/svg/uninassau.svg" alt="Logo Uninassau" style="width:200px;"/>
+            </body>
         </html>
         """
         send_email(email, subject, body)
@@ -201,7 +201,7 @@ def cadastro():
         return jsonify({'success': True, 'message': 'Cadastro solicitado com sucesso'})
     except Exception as e:
         print(f"Erro: {e}")
-        return jsonify({"error": "Erro ao realizar o cadastro"}), 500
+        return jsonify({"error": "Erro ao solicitar o cadastro"}), 500
     finally:
         cursor.close()
         db.close()
