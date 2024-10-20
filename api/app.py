@@ -4,7 +4,6 @@ from datetime import datetime
 from werkzeug.utils import secure_filename
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import requests
 import smtplib
 import mysql.connector
 import pytz
@@ -565,7 +564,8 @@ def reservas_lab():
     if db is None:
         return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
 
-    cursor = db.cursor()
+    # Criando o cursor com o argumento dictionary=True para retornar os dados como dicionário
+    cursor = db.cursor(dictionary=True)
     try:
         data = request.json
         lab_name = data.get('labName')
@@ -578,14 +578,14 @@ def reservas_lab():
         software_especifico = data.get('softwareEspecifico', False)
         software_nome = data.get('softwareNome')
 
-        # Verificar se o usuário existe e obtem o e-mail dele no banco de dados
+        # Verificar se o usuário existe e obter o e-mail dele no banco de dados
         cursor.execute('SELECT email FROM usuarios WHERE matricula = %s', (matricula,))
         user = cursor.fetchone()
 
         if not user:
             return jsonify({"error": "Usuário não encontrado"}), 404
 
-        email = user['email']  # Obtenção do e-mail do usuário a partir do banco de dados
+        email = user['email']  # Acessa o e-mail a partir do dicionário retornado
 
         # Inserindo a reserva no banco de dados
         insert_query = """
@@ -602,14 +602,14 @@ def reservas_lab():
         create_notification(matricula, notification_message)
 
         # Enviando o e-mail de confirmação para o usuário
-        subject = "Solicitação de Reserva de sala"
+        subject = "Solicitação de Reserva de Laboratório"
         body = f"""
         <html>
             <body>
                 <h2>Olá {nome},</h2>
-                <p>Sua reserva para <strong>{lab_name}</strong> no dia <strong>{formatted_date}</strong> das <strong>{time}</strong> às <strong>{time_fim}</strong> foi solicitada.</p>
+                <p>Sua reserva para o laboratório <strong>{lab_name}</strong> no dia <strong>{formatted_date}</strong> das <strong>{time}</strong> às <strong>{time_fim}</strong> foi solicitada.</p>
                 <p>Status: <strong>Pendente de aprovação</strong>.</p>
-                <p>Finalidade: {purpose}</p>
+                <p>Motivo: {purpose}</p>
                 <p>Software específico: {'Sim' if software_especifico else 'Não'}</p>
                 {f'<p>Nome do software: {software_nome}</p>' if software_especifico else ''}
                 <br>
