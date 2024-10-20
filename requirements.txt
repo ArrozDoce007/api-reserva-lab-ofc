@@ -1,7 +1,6 @@
 Flask
 Flask-Cors
 mysql-connector-python
-requests
 gunicorn
 jsonify
 datetime
