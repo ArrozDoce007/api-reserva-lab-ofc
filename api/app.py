@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_mail import Mail, Message
 from flask_cors import CORS
 from datetime import datetime
 from werkzeug.utils import secure_filename
@@ -9,6 +10,18 @@ import threading
 
 app = Flask(__name__)
 CORS(app)
+
+app = Flask(__name__)
+
+# Configurações do servidor de email
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'mk.guilherme226@gmail.com'  # Substitua com seu email
+app.config['MAIL_PASSWORD'] = '26042004_Aa'  # Substitua com sua senha de email
+app.config['MAIL_DEFAULT_SENDER'] = 'seu-email@gmail.com'
+
+mail = Mail(app)
 
 # Limitar o tamanho do upload para 10 MB
 app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10 MB
@@ -66,6 +79,14 @@ def delete_from_s3(bucket_name, file_name):
 # Função para substituir espaços por underscore
 def format_filename(filename):
     return filename.replace(' ', '_').replace('-', '_')
+
+def enviar_email(destinatario, assunto, corpo):
+    try:
+        msg = Message(assunto, recipients=[destinatario])
+        msg.body = corpo
+        mail.send(msg)
+    except Exception as e:
+        print(f"Erro ao enviar email: {str(e)}")
 
 # Função para conectar ao banco de dados
 def get_db_connection():
@@ -621,12 +642,15 @@ def rejeitar_pedido(id):
         db.commit()
 
         # Criar notificação para o usuário
-        cursor.execute("SELECT matricula, lab_name, date FROM reservas WHERE id = %s", (id,))
+        cursor.execute("SELECT matricula, lab_name, date, email FROM reservas WHERE id = %s", (id,))
         reservation = cursor.fetchone()
         if reservation:
             formatted_date = datetime.strptime(reservation['date'], '%Y-%m-%d').strftime('%d-%m-%Y')  # Formatar a data
             notification_message = f"Sua reserva para {reservation['lab_name']} em {formatted_date} foi rejeitada. Motivo: {motivo}."
             create_notification(reservation['matricula'], notification_message)
+
+            # Enviar email para o usuário
+            enviar_email(reservation['email'], "Pedido Rejeitado", notification_message)
 
         return jsonify({"message": "Pedido rejeitado com sucesso"}), 200
     except Exception as e:
