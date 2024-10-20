@@ -306,7 +306,8 @@ def update_usuario(user_id):
             return jsonify({"error": "Usuário não encontrado"}), 404
 
         user_email = user['email']
-        user_name = user['nome']  # Supondo que você tem um campo 'nome'
+        user_name = user['nome']
+        old_tipo_usuario = user['tipo_usuario']  # Armazena o tipo de usuário anterior
 
         # Atualiza o tipo de usuário
         cursor.execute('UPDATE usuarios SET tipo_usuario = %s WHERE id = %s', (tipo_usuario, user_id))
@@ -317,23 +318,36 @@ def update_usuario(user_id):
 
         db.commit()
 
-         # Envia o e-mail de notificação apenas se houver uma mudança
-        if tipo_usuario != user['tipo_usuario']:  # Verifica se o tipo de usuário foi realmente alterado
-            subject = ""
-            body = ""
+        subject = ""
+        body = ""
 
+        if old_tipo_usuario != tipo_usuario:
             if tipo_usuario == 'user':
-                subject = "Aprovação de Usuário"
-                body = f"""
-                <html>
-                    <body>
-                        <h1>Olá {user_name}</h1>
-                        <p>Seu acesso ao sistema foi aprovado.</p>
-                        <p>Se você não solicitou essa alteração, entre em contato com o suporte.</p>
-                        <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
-                    </body>
-                </html>
-                """
+                if old_tipo_usuario == 'adm':
+                    subject = "Rebaixamento de Usuário"
+                    body = f"""
+                    <html>
+                        <body>
+                            <h1>Olá {user_name}</h1>
+                            <p>Seu acesso ao sistema foi rebaixado para usuário padrão.</p>
+                            <p>Se você não solicitou essa alteração, entre em contato com o suporte.</p>
+                            <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
+                        </body>
+                    </html>
+                    """
+                else:
+                    subject = "Aprovação de Usuário"
+                    body = f"""
+                    <html>
+                        <body>
+                            <h1>Olá {user_name}</h1>
+                            <p>Seu acesso ao sistema foi aprovado.</p>
+                            <p>Se você não solicitou essa alteração, entre em contato com o suporte.</p>
+                            <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
+                        </body>
+                    </html>
+                    """
+                
             elif tipo_usuario == 'adm':
                 subject = "Promoção para Administrador"
                 body = f"""
@@ -341,18 +355,6 @@ def update_usuario(user_id):
                     <body>
                         <h1>Olá {user_name}</h1>
                         <p>Parabéns! Você foi promovido a Administrador.</p>
-                        <p>Se você não solicitou essa alteração, entre em contato com o suporte.</p>
-                        <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
-                    </body>
-                </html>
-                """
-            elif tipo_usuario == 'user':
-                subject = "Rebaixamento de Usuário"
-                body = f"""
-                <html>
-                    <body>
-                        <h1>Olá {user_name}</h1>
-                        <p>Seu acesso ao sistema foi rebaixado para usuário padrão.</p>
                         <p>Se você não solicitou essa alteração, entre em contato com o suporte.</p>
                         <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
                     </body>
