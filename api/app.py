@@ -184,11 +184,12 @@ def cadastro():
         )
         db.commit()
 
-         # Enviar e-mail de confirmação
+        # Enviar e-mail de confirmação
         subject = "Cadastro solicitado"
-        body = f"Olá {nome},\n\nSeu cadastro ao sistema de reserva de salas foi solicitado com sucesso.
-        \nAguarde a aprovação do administrador.
-        \n\https://logo.uninassau.edu.br/img/svg/uninassau.svg"
+        body = (f"Olá {nome},\n\n"
+                "Seu cadastro ao sistema de reserva de salas foi solicitado com sucesso."
+                "\nAguarde a aprovação do administrador."
+                "\n\nhttps://logo.uninassau.edu.br/img/svg/uninassau.svg")
         send_email(email, subject, body)
 
         return jsonify({'success': True, 'message': 'Cadastro solicitado com sucesso'})
