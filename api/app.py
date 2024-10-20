@@ -263,7 +263,7 @@ def deletar_usuario(user_id):
         body = f"""
         <html>
             <body>
-                <h1>Olá {user_name},</h1>
+                <h1>Olá {user_name}</h1>
                 <p>Sua conta foi excluída do do sistema de reserva de salas.</p>
                 <p>Se você não solicitou essa exclusão, entre em contato com o suporte.</p>
                 <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
@@ -326,7 +326,7 @@ def update_usuario(user_id):
             body = f"""
             <html>
                 <body>
-                    <h1>Olá {user_name},</h1>
+                    <h1>Olá {user_name}</h1>
                     <p>Seu acesso ao sistema foi aprovado.</p>
                     <p>Se você não solicitou essa alteração, entre em contato com o suporte.</p>
                     <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
@@ -338,19 +338,19 @@ def update_usuario(user_id):
             body = f"""
             <html>
                 <body>
-                    <h1>Olá {user_name},</h1>
+                    <h1>Olá {user_name}</h1>
                     <p>Parabéns! Você foi promovido a Administrador.</p>
                     <p>Se você não solicitou essa alteração, entre em contato com o suporte.</p>
                     <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
                 </body>
             </html>
             """
-        else:
+        elif tipo_usuario == 'user':
             subject = "Rebaixamento de Usuário"
             body = f"""
             <html>
                 <body>
-                    <h1>Olá {user_name},</h1>
+                    <h1>Olá {user_name}</h1>
                     <p>Seu acesso ao sistema foi rebaixado para usuário padrão.</p>
                     <p>Se você não solicitou essa alteração, entre em contato com o suporte.</p>
                     <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
