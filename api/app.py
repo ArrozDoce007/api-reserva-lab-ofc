@@ -317,46 +317,47 @@ def update_usuario(user_id):
 
         db.commit()
 
-        # Envia o e-mail de notificação
-        subject = ""
-        body = ""
+         # Envia o e-mail de notificação apenas se houver uma mudança
+        if tipo_usuario != user['tipo_usuario']:  # Verifica se o tipo de usuário foi realmente alterado
+            subject = ""
+            body = ""
 
-        if tipo_usuario == 'user':
-            subject = "Aprovação de Usuário"
-            body = f"""
-            <html>
-                <body>
-                    <h1>Olá {user_name}</h1>
-                    <p>Seu acesso ao sistema foi aprovado.</p>
-                    <p>Se você não solicitou essa alteração, entre em contato com o suporte.</p>
-                    <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
-                </body>
-            </html>
-            """
-        elif tipo_usuario == 'adm':
-            subject = "Promoção para Administrador"
-            body = f"""
-            <html>
-                <body>
-                    <h1>Olá {user_name}</h1>
-                    <p>Parabéns! Você foi promovido a Administrador.</p>
-                    <p>Se você não solicitou essa alteração, entre em contato com o suporte.</p>
-                    <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
-                </body>
-            </html>
-            """
-        elif tipo_usuario == 'user':
-            subject = "Rebaixamento de Usuário"
-            body = f"""
-            <html>
-                <body>
-                    <h1>Olá {user_name}</h1>
-                    <p>Seu acesso ao sistema foi rebaixado para usuário padrão.</p>
-                    <p>Se você não solicitou essa alteração, entre em contato com o suporte.</p>
-                    <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
-                </body>
-            </html>
-            """
+            if tipo_usuario == 'user':
+                subject = "Aprovação de Usuário"
+                body = f"""
+                <html>
+                    <body>
+                        <h1>Olá {user_name}</h1>
+                        <p>Seu acesso ao sistema foi aprovado.</p>
+                        <p>Se você não solicitou essa alteração, entre em contato com o suporte.</p>
+                        <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
+                    </body>
+                </html>
+                """
+            elif tipo_usuario == 'adm':
+                subject = "Promoção para Administrador"
+                body = f"""
+                <html>
+                    <body>
+                        <h1>Olá {user_name}</h1>
+                        <p>Parabéns! Você foi promovido a Administrador.</p>
+                        <p>Se você não solicitou essa alteração, entre em contato com o suporte.</p>
+                        <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
+                    </body>
+                </html>
+                """
+            elif tipo_usuario == 'user':
+                subject = "Rebaixamento de Usuário"
+                body = f"""
+                <html>
+                    <body>
+                        <h1>Olá {user_name}</h1>
+                        <p>Seu acesso ao sistema foi rebaixado para usuário padrão.</p>
+                        <p>Se você não solicitou essa alteração, entre em contato com o suporte.</p>
+                        <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
+                    </body>
+                </html>
+                """
 
         send_email(user_email, subject, body)
 
