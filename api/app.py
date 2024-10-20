@@ -296,8 +296,18 @@ def update_usuario(user_id):
     
     # A partir daqui, você pode especificar quais campos deseja atualizar
     tipo_usuario = data.get('tipo_usuario')
-    
+
     try:
+        # Recupera o usuário para obter o e-mail e nome
+        cursor.execute('SELECT * FROM usuarios WHERE id = %s', (user_id,))
+        user = cursor.fetchone()
+
+        if not user:
+            return jsonify({"error": "Usuário não encontrado"}), 404
+
+        user_email = user['email']
+        user_name = user['nome']  # Supondo que você tem um campo 'nome'
+
         # Atualiza o tipo de usuário
         cursor.execute('UPDATE usuarios SET tipo_usuario = %s WHERE id = %s', (tipo_usuario, user_id))
         
@@ -306,6 +316,49 @@ def update_usuario(user_id):
             return jsonify({"error": "Usuário não encontrado"}), 404
 
         db.commit()
+
+        # Envia o e-mail de notificação
+        subject = ""
+        body = ""
+
+        if tipo_usuario == 'user':
+            subject = "Aprovação de Usuário"
+            body = f"""
+            <html>
+                <body>
+                    <h1>Olá {user_name},</h1>
+                    <p>Seu acesso ao sistema foi aprovado.</p>
+                    <p>Se você não solicitou essa alteração, entre em contato com o suporte.</p>
+                    <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
+                </body>
+            </html>
+            """
+        elif tipo_usuario == 'adm':
+            subject = "Promoção para Administrador"
+            body = f"""
+            <html>
+                <body>
+                    <h1>Olá {user_name},</h1>
+                    <p>Parabéns! Você foi promovido a Administrador.</p>
+                    <p>Se você não solicitou essa alteração, entre em contato com o suporte.</p>
+                    <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
+                </body>
+            </html>
+            """
+        else:
+            subject = "Rebaixamento de Usuário"
+            body = f"""
+            <html>
+                <body>
+                    <h1>Olá {user_name},</h1>
+                    <p>Seu acesso ao sistema foi rebaixado para usuário padrão.</p>
+                    <p>Se você não solicitou essa alteração, entre em contato com o suporte.</p>
+                    <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
+                </body>
+            </html>
+            """
+
+        send_email(user_email, subject, body)
 
         return jsonify({"success": True, "message": "Usuário atualizado com sucesso."})
     except Exception as e:
