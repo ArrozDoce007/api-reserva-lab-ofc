@@ -101,6 +101,22 @@ def get_db_connection():
         print(f"Erro ao conectar ao banco de dados: {err}")
         return None
 
+@app.route('/enviar-email', methods=['POST'])
+def enviar_email_usuario():
+    data = request.json
+    email = data.get('email')
+    assunto = data.get('assunto')
+    corpo = data.get('corpo')
+
+    if not email or not assunto or not corpo:
+        return jsonify({"error": "Email, assunto e corpo são obrigatórios"}), 400
+
+    sucesso = enviar_email(email, assunto, corpo)
+    if sucesso:
+        return jsonify({"message": "Email enviado com sucesso"}), 200
+    else:
+        return jsonify({"error": "Falha ao enviar email"}), 500
+
 # Rota data e hora
 @app.route('/time/brazilia', methods=['GET'])
 def get_brasilia_time():
@@ -613,6 +629,7 @@ def update_reservas(id):
         db.close()
 
 # Rota para rejeitar um pedido
+# Rota para rejeitar um pedido
 @app.route('/rejeitar/pedido/<int:id>', methods=['POST'])
 def rejeitar_pedido(id):
     db = get_db_connection()
@@ -641,15 +658,12 @@ def rejeitar_pedido(id):
         db.commit()
 
         # Criar notificação para o usuário
-        cursor.execute("SELECT matricula, lab_name, date, email FROM reservas WHERE id = %s", (id,))
+        cursor.execute("SELECT matricula, lab_name, date FROM reservas WHERE id = %s", (id,))
         reservation = cursor.fetchone()
         if reservation:
             formatted_date = datetime.strptime(reservation['date'], '%Y-%m-%d').strftime('%d-%m-%Y')  # Formatar a data
             notification_message = f"Sua reserva para {reservation['lab_name']} em {formatted_date} foi rejeitada. Motivo: {motivo}."
             create_notification(reservation['matricula'], notification_message)
-
-            # Enviar email para o usuário
-            enviar_email(reservation['email'], "Pedido Rejeitado", notification_message)
 
         return jsonify({"message": "Pedido rejeitado com sucesso"}), 200
     except Exception as e:
