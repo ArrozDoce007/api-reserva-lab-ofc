@@ -602,11 +602,11 @@ def reservas_lab():
         create_notification(matricula, notification_message)
 
         # Enviando o e-mail de confirmação para o usuário
-        subject = "Solicitação de Reserva de Laboratório"
+        subject = "Solicitação de Reserva"
         body = f"""
         <html>
             <body>
-                <h2>Olá {nome},</h2>
+                <h2>Olá {nome}</h2>
                 <p>Sua reserva para o laboratório <strong>{lab_name}</strong> no dia <strong>{formatted_date}</strong> das <strong>{time}</strong> às <strong>{time_fim}</strong> foi solicitada.</p>
                 <p>Status: <strong>Pendente de aprovação</strong>.</p>
                 <p>Motivo: {purpose}</p>
