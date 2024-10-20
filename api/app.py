@@ -185,11 +185,13 @@ def cadastro():
         db.commit()
 
          # Enviar e-mail de confirmação
-        subject = "Cadastro Realizado"
-        body = f"Olá {nome},\n\nSeu cadastro foi realizado com sucesso. Aguarde a aprovação do administrador."
+        subject = "Cadastro solicitado"
+        body = f"Olá {nome},\n\nSeu cadastro ao sistema de reserva de salas foi solicitado com sucesso.
+        \nAguarde a aprovação do administrador.
+        \n\https://logo.uninassau.edu.br/img/svg/uninassau.svg"
         send_email(email, subject, body)
 
-        return jsonify({'success': True, 'message': 'Cadastro realizado com sucesso'})
+        return jsonify({'success': True, 'message': 'Cadastro solicitado com sucesso'})
     except Exception as e:
         print(f"Erro: {e}")
         return jsonify({"error": "Erro ao realizar o cadastro"}), 500
