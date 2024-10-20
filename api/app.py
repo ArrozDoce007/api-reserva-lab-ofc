@@ -342,7 +342,6 @@ def update_usuario(user_id):
                         <body>
                             <h1>Olá {user_name}</h1>
                             <p>Seu acesso ao sistema foi aprovado.</p>
-                            <p>Se você não solicitou essa alteração, entre em contato com o suporte.</p>
                             <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
                         </body>
                     </html>
