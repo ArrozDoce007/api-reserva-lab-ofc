@@ -10,9 +10,6 @@ import threading
 
 app = Flask(__name__)
 CORS(app)
-
-app = Flask(__name__)
-
 # Configurações do servidor de email
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
