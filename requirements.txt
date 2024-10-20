@@ -1,6 +1,5 @@
 Flask
 Flask-Cors
-Flask-Mail
 mysql-connector-python
 gunicorn
 jsonify
