@@ -1,5 +1,4 @@
 from flask import Flask, request, jsonify
-from flask_mail import Mail, Message
 from flask_cors import CORS
 from datetime import datetime
 from werkzeug.utils import secure_filename
@@ -10,15 +9,6 @@ import threading
 
 app = Flask(__name__)
 CORS(app)
-# Configurações do servidor de email
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'mk.guilherme226@gmail.com'  # Substitua com seu email
-app.config['MAIL_PASSWORD'] = '26042004_Aa'  # Substitua com sua senha de email
-app.config['MAIL_DEFAULT_SENDER'] = 'mk.guilherme226@gmail.com'
-
-mail = Mail(app)
 
 # Limitar o tamanho do upload para 10 MB
 app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10 MB
@@ -76,16 +66,6 @@ def delete_from_s3(bucket_name, file_name):
 # Função para substituir espaços por underscore
 def format_filename(filename):
     return filename.replace(' ', '_').replace('-', '_')
-
-# Função para envio de email
-def enviar_email(destinatario, assunto, corpo):
-    try:
-        msg = Message(assunto, recipients=[destinatario])
-        msg.body = corpo
-        mail.send(msg)
-        print(f"Email enviado para {destinatario} com sucesso.")
-    except Exception as e:
-        print(f"Erro ao enviar email: {str(e)}")
         
 # Função para conectar ao banco de dados
 def get_db_connection():
@@ -100,22 +80,6 @@ def get_db_connection():
     except mysql.connector.Error as err:
         print(f"Erro ao conectar ao banco de dados: {err}")
         return None
-
-@app.route('/enviar-email', methods=['POST'])
-def enviar_email_usuario():
-    data = request.json
-    email = data.get('email')
-    assunto = data.get('assunto')
-    corpo = data.get('corpo')
-
-    if not email or not assunto or not corpo:
-        return jsonify({"error": "Email, assunto e corpo são obrigatórios"}), 400
-
-    sucesso = enviar_email(email, assunto, corpo)
-    if sucesso:
-        return jsonify({"message": "Email enviado com sucesso"}), 200
-    else:
-        return jsonify({"error": "Falha ao enviar email"}), 500
 
 # Rota data e hora
 @app.route('/time/brazilia', methods=['GET'])
