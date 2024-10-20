@@ -16,7 +16,7 @@ app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = 'mk.guilherme226@gmail.com'  # Substitua com seu email
 app.config['MAIL_PASSWORD'] = '26042004_Aa'  # Substitua com sua senha de email
-app.config['MAIL_DEFAULT_SENDER'] = 'seu-email@gmail.com'
+app.config['MAIL_DEFAULT_SENDER'] = 'mk.guilherme226@gmail.com'
 
 mail = Mail(app)
 
@@ -77,14 +77,16 @@ def delete_from_s3(bucket_name, file_name):
 def format_filename(filename):
     return filename.replace(' ', '_').replace('-', '_')
 
+# Função para envio de email
 def enviar_email(destinatario, assunto, corpo):
     try:
         msg = Message(assunto, recipients=[destinatario])
         msg.body = corpo
         mail.send(msg)
+        print(f"Email enviado para {destinatario} com sucesso.")
     except Exception as e:
         print(f"Erro ao enviar email: {str(e)}")
-
+        
 # Função para conectar ao banco de dados
 def get_db_connection():
     try:
