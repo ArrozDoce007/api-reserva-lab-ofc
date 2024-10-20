@@ -578,6 +578,16 @@ def reservas_lab():
         software_especifico = data.get('softwareEspecifico', False)
         software_nome = data.get('softwareNome')
 
+        # Verificar se o usuário existe e obtem o e-mail dele no banco de dados
+        cursor.execute('SELECT email FROM usuarios WHERE matricula = %s', (matricula,))
+        user = cursor.fetchone()
+
+        if not user:
+            return jsonify({"error": "Usuário não encontrado"}), 404
+
+        email = user['email']  # Obtenção do e-mail do usuário a partir do banco de dados
+
+        # Inserindo a reserva no banco de dados
         insert_query = """
         INSERT INTO reservas (lab_name, date, time, time_fim, purpose, nome, matricula, status, software_especifico, software_nome)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
@@ -590,6 +600,26 @@ def reservas_lab():
         # Criar notificação após a reserva ser criada
         notification_message = f"Sua reserva para {lab_name} em {formatted_date} foi solicitada e está pendente de aprovação."
         create_notification(matricula, notification_message)
+
+        # Enviando o e-mail de confirmação para o usuário
+        subject = "Solicitação de Reserva de sala"
+        body = f"""
+        <html>
+            <body>
+                <h2>Olá {nome},</h2>
+                <p>Sua reserva para <strong>{lab_name}</strong> no dia <strong>{formatted_date}</strong> das <strong>{time}</strong> às <strong>{time_fim}</strong> foi solicitada.</p>
+                <p>Status: <strong>Pendente de aprovação</strong>.</p>
+                <p>Finalidade: {purpose}</p>
+                <p>Software específico: {'Sim' if software_especifico else 'Não'}</p>
+                {f'<p>Nome do software: {software_nome}</p>' if software_especifico else ''}
+                <br>
+                <p>Aguarde a aprovação do administrador.</p>
+                <br>
+                <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
+            </body>
+        </html>
+        """
+        send_email(email, subject, body)
 
         return "", 204
     except Exception as e:
