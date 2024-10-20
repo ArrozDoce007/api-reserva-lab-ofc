@@ -186,10 +186,16 @@ def cadastro():
 
         # Enviar e-mail de confirmação
         subject = "Cadastro solicitado"
-        body = (f"Olá {nome},\n\n"
-                "Seu cadastro ao sistema de reserva de salas foi solicitado com sucesso."
-                "\nAguarde a aprovação do administrador."
-                "\n\nhttps://logo.uninassau.edu.br/img/svg/uninassau.svg")
+        body = f"""
+        <html>
+          <body>
+            <p>Olá {nome},</p>
+            <p>Seu cadastro ao sistema de reserva de salas foi solicitado com sucesso.</p>
+            <p>Aguarde a aprovação do administrador.</p>
+            <img src="https://logo.uninassau.edu.br/img/svg/uninassau.svg" alt="Logo UNINASSAU" style="width:200px; height:auto;">
+          </body>
+        </html>
+        """
         send_email(email, subject, body)
 
         return jsonify({'success': True, 'message': 'Cadastro solicitado com sucesso'})
