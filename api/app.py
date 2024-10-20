@@ -2,6 +2,9 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from datetime import datetime
 from werkzeug.utils import secure_filename
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import smtplib
 import mysql.connector
 import pytz
 import boto3
@@ -66,6 +69,31 @@ def delete_from_s3(bucket_name, file_name):
 # Função para substituir espaços por underscore
 def format_filename(filename):
     return filename.replace(' ', '_').replace('-', '_')
+
+# Função para enviar e-mail
+def send_email(to_email, subject, body):
+    # Configuração do e-mail
+    sender_email = "gui.teste.email.lab@gmail.com"  # Substitua pelo seu e-mail
+    sender_password = "ozvvmpjttqoogzwn"
+    smtp_server = "smtp.gmail.com"
+    smtp_port = 587
+
+    # Criar mensagem
+    message = MIMEMultipart()
+    message["From"] = sender_email
+    message["To"] = to_email
+    message["Subject"] = subject
+    message.attach(MIMEText(body, "plain"))
+
+    # Enviar e-mail
+    try:
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()
+            server.login(sender_email, sender_password)
+            server.send_message(message)
+        print(f"Email enviado com sucesso para {to_email}")
+    except Exception as e:
+        print(f"Erro ao enviar e-mail: {e}")
         
 # Função para conectar ao banco de dados
 def get_db_connection():
@@ -155,6 +183,11 @@ def cadastro():
             (nome, matricula, email, senha, 'null')
         )
         db.commit()
+
+         # Enviar e-mail de confirmação
+        subject = "Cadastro Realizado"
+        body = f"Olá {nome},\n\nSeu cadastro foi realizado com sucesso. Aguarde a aprovação do administrador."
+        send_email(email, subject, body)
 
         return jsonify({'success': True, 'message': 'Cadastro realizado com sucesso'})
     except Exception as e:
