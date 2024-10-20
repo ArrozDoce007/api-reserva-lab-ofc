@@ -4,6 +4,8 @@ from datetime import datetime
 from werkzeug.utils import secure_filename
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from io import BytesIO
+import requests
 import smtplib
 import mysql.connector
 import pytz
@@ -83,8 +85,21 @@ def send_email(to_email, subject, body):
     message["From"] = sender_email
     message["To"] = to_email
     message["Subject"] = subject
+
+    # Anexando o corpo HTML
     message.attach(MIMEText(body, "html"))
 
+    # Download da imagem
+    image_url = "https://reserva-lab-nassau.s3.us-east-2.amazonaws.com/uninassau.svg"
+    response = requests.get(image_url)
+    if response.status_code == 200:
+        image_data = BytesIO(response.content)
+        image = MIMEImage(image_data.read(), name="uninassau.svg")
+        image.add_header('Content-ID', '<uninassau.svg>')  # Adicione este cabeçalho
+        message.attach(image)
+    else:
+        print("Falha ao baixar a imagem")
+    
     # Enviar e-mail
     try:
         with smtplib.SMTP(smtp_server, smtp_port) as server:
@@ -192,7 +207,7 @@ def cadastro():
                 <h1>Olá {nome}</h1>
                 <p>Seu cadastro ao sistema de reserva de salas foi solicitado com sucesso.</p>
                 <p>Aguarde a aprovação do administrador.</p>
-                <img src="https://reserva-lab-nassau.s3.us-east-2.amazonaws.com/uninassau.svg" alt="Logo Uninassau"/>
+                <img src="cid:uninassau.svg" alt="Logo Uninassau"/>
             </body>
         </html>
         """
