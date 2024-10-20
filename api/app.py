@@ -198,7 +198,7 @@ def cadastro():
         body = f"""
         <html>
             <body>
-                <h1>Olá {nome},</h1>
+                <h1>Olá {nome}</h1>
                 <p>Seu cadastro ao sistema de reserva de salas foi solicitado com sucesso.</p>
                 <p>Aguarde a aprovação do administrador.</p>
                 <img src="cid:uninassau.svg" alt="Logo Uninassau"/>
