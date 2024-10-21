@@ -281,6 +281,7 @@ def deletar_usuario(user_id):
             </body>
         </html>
         """
+        
         send_email_async(user_email, subject, body)
 
         return jsonify({'success': True, 'message': 'Usuário e reservas excluídos com sucesso'}), 200
