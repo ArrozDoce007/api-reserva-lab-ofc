@@ -259,7 +259,7 @@ def deletar_usuario(user_id):
         # Recupera o e-mail e o nome do usuário
         user_email = user['email']
         user_name = user['nome']
-        user_matricula = user['matricula']
+        user_matricula = user['matricula']  # Presume-se que a matrícula esteja na tabela `usuarios`
 
         # Excluir rejeições associadas às reservas rejeitadas do usuário
         cursor.execute('''
@@ -268,11 +268,15 @@ def deletar_usuario(user_id):
         ''', (user_matricula,))
         db.commit()
 
-        # Exclui todas as reservas relacionadas ao usuário
+        # Excluir todas as reservas relacionadas ao usuário
         cursor.execute('DELETE FROM reservas WHERE matricula = %s', (user_matricula,))
         db.commit()
 
-        # Exclui o usuário
+        # Excluir notificações associadas ao usuário
+        cursor.execute('DELETE FROM notifications WHERE user_matricula = %s', (user_matricula,))
+        db.commit()
+
+        # Excluir o usuário
         cursor.execute('DELETE FROM usuarios WHERE id = %s', (user_id,))
         db.commit()
 
@@ -290,7 +294,7 @@ def deletar_usuario(user_id):
         """
         send_email_async(user_email, subject, body)
 
-        return jsonify({'success': True, 'message': 'Usuário, reservas e rejeições excluídos com sucesso'}), 200
+        return jsonify({'success': True, 'message': 'Usuário, reservas, rejeições e notificações excluídos com sucesso'}), 200
     except Exception as e:
         print(f"Erro: {e}")
         return jsonify({"error": "Erro ao excluir o usuário"}), 500
