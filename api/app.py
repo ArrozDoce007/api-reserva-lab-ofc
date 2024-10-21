@@ -256,9 +256,14 @@ def deletar_usuario(user_id):
         if not user:
             return jsonify({'success': False, 'message': 'Usuário não encontrado'}), 404
 
-        # Recupera o e-mail do usuário
+        # Recupera o e-mail e o nome do usuário
         user_email = user['email']
         user_name = user['nome']
+        user_matricula = user['matricula']  # Presume-se que a matrícula esteja na tabela `usuarios`
+
+        # Exclui todas as reservas relacionadas ao usuário
+        cursor.execute('DELETE FROM reservas WHERE matricula = %s', (user_matricula,))
+        db.commit()
 
         # Exclui o usuário
         cursor.execute('DELETE FROM usuarios WHERE id = %s', (user_id,))
@@ -276,9 +281,9 @@ def deletar_usuario(user_id):
             </body>
         </html>
         """
-        send_email(email, subject, body)
+        send_email_async(user_email, subject, body)
 
-        return jsonify({'success': True, 'message': 'Usuário excluído com sucesso'}), 200
+        return jsonify({'success': True, 'message': 'Usuário e reservas excluídos com sucesso'}), 200
     except Exception as e:
         print(f"Erro: {e}")
         return jsonify({"error": "Erro ao excluir o usuário"}), 500
