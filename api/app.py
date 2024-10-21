@@ -259,7 +259,14 @@ def deletar_usuario(user_id):
         # Recupera o e-mail e o nome do usuário
         user_email = user['email']
         user_name = user['nome']
-        user_matricula = user['matricula']  # Presume-se que a matrícula esteja na tabela `usuarios`
+        user_matricula = user['matricula']
+
+        # Excluir rejeições associadas às reservas rejeitadas do usuário
+        cursor.execute('''
+            DELETE FROM rejeicoes
+            WHERE pedido_id IN (SELECT id FROM reservas WHERE matricula = %s AND status = 'rejeitado')
+        ''', (user_matricula,))
+        db.commit()
 
         # Exclui todas as reservas relacionadas ao usuário
         cursor.execute('DELETE FROM reservas WHERE matricula = %s', (user_matricula,))
@@ -281,10 +288,9 @@ def deletar_usuario(user_id):
             </body>
         </html>
         """
-        
         send_email_async(user_email, subject, body)
 
-        return jsonify({'success': True, 'message': 'Usuário e reservas excluídos com sucesso'}), 200
+        return jsonify({'success': True, 'message': 'Usuário, reservas e rejeições excluídos com sucesso'}), 200
     except Exception as e:
         print(f"Erro: {e}")
         return jsonify({"error": "Erro ao excluir o usuário"}), 500
@@ -623,7 +629,7 @@ def reservas_lab():
             <body>
                 <h2>Olá {nome}</h2>
                 <p>Sua reserva para o(a) <strong>{lab_name}</strong> no dia <strong>{formatted_date}</strong> das <strong>{time}</strong> às <strong>{time_fim}</strong> foi solicitada.</p>
-                <p>Status: <strong>Pendente de aprovação</strong>.</p>
+                <p>Status: <strong <strong style="color: #B8860B;">Pendente de aprovação</strong>.</p>
                 <p>Finalidade: {purpose}</p>
                 <p>Software específico: {'Sim' if software_especifico else 'Não'}</p>
                 {f'<p>Nome do software: {software_nome}</p>' if software_especifico else ''}
