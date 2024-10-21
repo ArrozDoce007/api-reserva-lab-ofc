@@ -4,6 +4,7 @@ from datetime import datetime
 from werkzeug.utils import secure_filename
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from concurrent.futures import ThreadPoolExecutor
 import smtplib
 import mysql.connector
 import pytz
@@ -70,6 +71,8 @@ def delete_from_s3(bucket_name, file_name):
 def format_filename(filename):
     return filename.replace(' ', '_').replace('-', '_')
 
+executor = ThreadPoolExecutor(max_workers=2)
+
 # Função para enviar e-mail
 def send_email(to_email, subject, body):
     # Configuração do e-mail
@@ -96,6 +99,10 @@ def send_email(to_email, subject, body):
         print(f"Email enviado com sucesso para {to_email}")
     except Exception as e:
         print(f"Erro ao enviar e-mail: {e}")
+
+# Função para enviar e-mail de forma assíncrona
+def send_email_async(to_email, subject, body):
+    executor.submit(send_email, to_email, subject, body)
         
 # Função para conectar ao banco de dados
 def get_db_connection():
@@ -263,7 +270,7 @@ def deletar_usuario(user_id):
         <html>
             <body>
                 <h1>Olá {user_name}</h1>
-                <p>Sua conta foi excluída do do sistema de reserva de salas.</p>
+                <p>Sua conta foi excluída do sistema de reserva de salas.</p>
                 <p>Se você não solicitou essa exclusão, entre em contato com o suporte.</p>
                 <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
             </body>
@@ -578,7 +585,7 @@ def reservas_lab():
         software_especifico = data.get('softwareEspecifico', False)
         software_nome = data.get('softwareNome')
 
-        # Verificar se o usuário existe e obter o e-mail dele no banco de dados
+        # Verificar se o usuário existe e obtem o e-mail dele no banco de dados
         cursor.execute('SELECT email FROM usuarios WHERE matricula = %s', (matricula,))
         user = cursor.fetchone()
 
@@ -619,7 +626,7 @@ def reservas_lab():
             </body>
         </html>
         """
-        send_email(email, subject, body)
+        send_email_async(email, subject, body)
 
         return "", 204
     except Exception as e:
