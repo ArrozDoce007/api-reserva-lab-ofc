@@ -240,7 +240,6 @@ def get_usuarios():
         db.close()
 
 # Rota para deletar usuários
-# Rota para deletar usuários
 @app.route('/usuarios/deletar/<int:user_id>', methods=['DELETE'])
 def deletar_usuario(user_id):
     db = get_db_connection()
@@ -277,7 +276,7 @@ def deletar_usuario(user_id):
             </body>
         </html>
         """
-        send_email(user_email, subject, body)
+        send_email_async(user_email, subject, body)
 
         return jsonify({'success': True, 'message': 'Usuário excluído com sucesso'}), 200
     except Exception as e:
