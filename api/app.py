@@ -814,12 +814,42 @@ def rejeitar_pedido(id):
         db.commit()
 
         # Criar notificação para o usuário
-        cursor.execute("SELECT matricula, lab_name, date FROM reservas WHERE id = %s", (id,))
+        cursor.execute("SELECT matricula, lab_name, date, time, time_fim, nome FROM reservas WHERE id = %s", (id,))
         reservation = cursor.fetchone()
+
         if reservation:
             formatted_date = datetime.strptime(reservation['date'], '%Y-%m-%d').strftime('%d-%m-%Y')  # Formatar a data
             notification_message = f"Sua reserva para {reservation['lab_name']} em {formatted_date} foi rejeitada. Motivo: {motivo}."
             create_notification(reservation['matricula'], notification_message)
+
+            # Obter o e-mail do usuário no banco de dados
+            cursor.execute('SELECT email FROM usuarios WHERE matricula = %s', (reservation['matricula'],))
+            user = cursor.fetchone()
+
+            if user:
+                email = user['email']
+                nome = reservation['nome']
+                lab_name = reservation['lab_name']
+                time = reservation['time']
+                time_fim = reservation['time_fim']
+
+                # Criar o corpo do e-mail de rejeição
+                subject = "Reserva Rejeitada"
+                body = f"""
+                <html>
+                    <body>
+                        <h2>Olá {nome}</h2>
+                        <p>Lamentamos informar que sua reserva para o(a) <strong>{lab_name}</strong> no dia <strong>{formatted_date}</strong> das <strong>{time}</strong> às <strong>{time_fim}</strong> foi <strong>rejeitada</strong>.</p>
+                        <p>Motivo da rejeição: {motivo}</p>
+                        <br>
+                        <p>Caso tenha dúvidas, entre em contato com a administração.</p>
+                        <br>
+                        <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
+                    </body>
+                </html>
+                """
+
+                send_email_async(email, subject, body)
 
         return jsonify({"message": "Pedido rejeitado com sucesso"}), 200
     except Exception as e:
