@@ -205,7 +205,7 @@ def cadastro():
             </body>
         </html>
         """
-        send_email_async(email, subject, body)
+        send_email(email, subject, body)
 
         return jsonify({'success': True, 'message': 'Cadastro solicitado com sucesso'})
     except Exception as e:
@@ -276,7 +276,7 @@ def deletar_usuario(user_id):
             </body>
         </html>
         """
-        send_email_async(email, subject, body)
+        send_email(email, subject, body)
 
         return jsonify({'success': True, 'message': 'Usuário excluído com sucesso'}), 200
     except Exception as e:
@@ -372,7 +372,7 @@ def update_usuario(user_id):
                 </html>
                 """
 
-        send_email_async(email, subject, body)
+        send_email(email, subject, body)
 
         return jsonify({"success": True, "message": "Usuário atualizado com sucesso."})
     except Exception as e:
@@ -749,8 +749,8 @@ def update_reservas(id):
                     </body>
                 </html>
                 """
-                # Enviar o e-mail de forma assíncrona
-                send_email_async(reservation['email'], subject, body)
+                # Enviar o e-mail
+                send_email(reservation['email'], subject, body)
 
         return jsonify({"message": "Status da reserva atualizado com sucesso"}), 200
     except Exception as e:
