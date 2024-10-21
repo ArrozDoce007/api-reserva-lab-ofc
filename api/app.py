@@ -71,7 +71,7 @@ def delete_from_s3(bucket_name, file_name):
 def format_filename(filename):
     return filename.replace(' ', '_').replace('-', '_')
 
-executor = ThreadPoolExecutor(max_workers=1)
+executor = ThreadPoolExecutor(max_workers=2)
 
 # Função para enviar e-mail
 def send_email(to_email, subject, body):
@@ -240,6 +240,7 @@ def get_usuarios():
         db.close()
 
 # Rota para deletar usuários
+# Rota para deletar usuários
 @app.route('/usuarios/deletar/<int:user_id>', methods=['DELETE'])
 def deletar_usuario(user_id):
     db = get_db_connection()
@@ -276,7 +277,7 @@ def deletar_usuario(user_id):
             </body>
         </html>
         """
-        send_email_async(user_email, subject, body)
+        send_email(user_email, subject, body)
 
         return jsonify({'success': True, 'message': 'Usuário excluído com sucesso'}), 200
     except Exception as e:
