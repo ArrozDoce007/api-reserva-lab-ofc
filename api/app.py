@@ -258,7 +258,7 @@ def deletar_usuario(user_id):
 
         # Recupera o e-mail do usuário
         user_email = user['email']
-        user_name = user['nome']  # Supondo que há um campo 'nome'
+        user_name = user['nome']
 
         # Exclui o usuário
         cursor.execute('DELETE FROM usuarios WHERE id = %s', (user_id,))
@@ -367,7 +367,7 @@ def update_usuario(user_id):
                 </html>
                 """
 
-        send_email(email, subject, body)
+        send_email(user_email, subject, body)
 
         return jsonify({"success": True, "message": "Usuário atualizado com sucesso."})
     except Exception as e:
@@ -717,35 +717,13 @@ def update_reservas(id):
         if cursor.rowcount == 0:
             return jsonify({"error": "Reserva não encontrada"}), 404
 
-        # Obter informações da reserva e o e-mail do usuário
-        cursor.execute("SELECT matricula, lab_name, date, nome, usuarios.email FROM reservas INNER JOIN usuarios ON reservas.matricula = usuarios.matricula WHERE reservas.id = %s", (id,))
+        # Criar notificação para o usuário
+        cursor.execute("SELECT matricula, lab_name, date FROM reservas WHERE id = %s", (id,))
         reservation = cursor.fetchone()
-
         if reservation:
-            # Formatar a data
-            formatted_date = datetime.strptime(reservation['date'], '%Y-%m-%d').strftime('%d-%m-%Y')
-
-            # Criar a notificação
+            formatted_date = datetime.strptime(reservation['date'], '%Y-%m-%d').strftime('%d-%m-%Y')  # Formatar a data
             notification_message = f"Sua reserva para {reservation['lab_name']} em {formatted_date} foi {new_status}."
             create_notification(reservation['matricula'], notification_message)
-
-            # Enviar e-mail se o status for "aprovado" ou "cancelado"
-            if new_status in ['cancelado']:
-                subject = f"Reserva {new_status.capitalize()}"
-                body = f"""
-                <html>
-                    <body>
-                        <h2>Olá {reservation['nome']}</h2>
-                        <p>Sua reserva para o(a) <strong>{reservation['lab_name']}</strong> no dia <strong>{formatted_date}</strong> foi <strong>{new_status}</strong>.</p>
-                        <br>
-                        <p>Caso tenha alguma dúvida, entre em contato com a administração.</p>
-                        <br>
-                        <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
-                    </body>
-                </html>
-                """
-                # Enviar o e-mail
-                send_email(reservation['email'], subject, body)
 
         return jsonify({"message": "Status da reserva atualizado com sucesso"}), 200
     except Exception as e:
