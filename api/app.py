@@ -9,6 +9,8 @@ import mysql.connector
 import pytz
 import boto3
 import threading
+import aiosmtplib
+import asyncio
 
 app = Flask(__name__)
 CORS(app)
@@ -70,10 +72,9 @@ def delete_from_s3(bucket_name, file_name):
 def format_filename(filename):
     return filename.replace(' ', '_').replace('-', '_')
 
-# Função para enviar e-mail
-def send_email(to_email, subject, body):
-    # Configuração do e-mail
-    sender_email = "gui.teste.email.lab@gmail.com"  # Substitua pelo seu e-mail
+# Função assíncrona para enviar e-mail
+async def send_email_async(to_email, subject, body):
+    sender_email = "gui.teste.email.lab@gmail.com"
     sender_password = "ozvvmpjttqoogzwn"
     smtp_server = "smtp.gmail.com"
     smtp_port = 587
@@ -86,13 +87,17 @@ def send_email(to_email, subject, body):
 
     # Anexando o corpo HTML
     message.attach(MIMEText(body, "html"))
-    
-    # Enviar e-mail
+
     try:
-        with smtplib.SMTP(smtp_server, smtp_port) as server:
-            server.starttls()
-            server.login(sender_email, sender_password)
-            server.send_message(message)
+        # Conexão assíncrona com o servidor SMTP e envio de e-mail
+        await aiosmtplib.send(
+            message,
+            hostname=smtp_server,
+            port=smtp_port,
+            start_tls=True,
+            username=sender_email,
+            password=sender_password,
+        )
         print(f"Email enviado com sucesso para {to_email}")
     except Exception as e:
         print(f"Erro ao enviar e-mail: {e}")
@@ -619,7 +624,7 @@ def reservas_lab():
             </body>
         </html>
         """
-        send_email(email, subject, body)
+        send_email(email, subject, body)asyncio.create_task(send_email_async(email, subject, body))
 
         return "", 204
     except Exception as e:
