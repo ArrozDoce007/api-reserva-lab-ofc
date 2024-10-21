@@ -7,4 +7,3 @@ datetime
 pytz
 werkzeug
 boto3
-aiosmtplib
