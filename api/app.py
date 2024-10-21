@@ -259,14 +259,23 @@ def deletar_usuario(user_id):
         # Recupera o e-mail, nome e matrícula do usuário
         user_email = user['email']
         user_name = user['nome']
-        user_matricula = user['matricula']  # Presumindo que 'matricula' existe no registro do usuário
+        user_matricula = user['matricula']
         user_tipo = user.get('tipo_usuario')
 
-        # Deleta reservas associadas ao usuário
-        cursor.execute('DELETE FROM reservas WHERE user_matricula = %s', (user_matricula,))
+        # Excluir rejeições associadas às reservas rejeitadas do usuário
+        cursor.execute('''
+            DELETE FROM rejeicoes
+            WHERE pedido_id IN (SELECT id FROM reservas WHERE matricula = %s AND status = 'rejeitado')
+        ''', (user_matricula,))
+        db.commit()
 
-        # Deleta notificações associadas ao usuário
+        # Excluir todas as reservas relacionadas ao usuário
+        cursor.execute('DELETE FROM reservas WHERE matricula = %s', (user_matricula,))
+        db.commit()
+
+        # Excluir notificações associadas ao usuário
         cursor.execute('DELETE FROM notifications WHERE user_matricula = %s', (user_matricula,))
+        db.commit()
 
         # Exclui o usuário
         cursor.execute('DELETE FROM usuarios WHERE id = %s', (user_id,))
@@ -299,9 +308,9 @@ def deletar_usuario(user_id):
             """
 
         # Enviar e-mail de notificação de exclusão
-        send_email(user_email, subject, body)
+        send_email_async(user_email, subject, body)
 
-        return jsonify({'success': True, 'message': 'Usuário excluído com sucesso'}), 200
+        return jsonify({'success': True, 'message': 'Usuário, reservas, rejeições e notificações excluídos com sucesso'}), 200
     except Exception as e:
         print(f"Erro: {e}")
         return jsonify({"error": "Erro ao excluir o usuário"}), 500
