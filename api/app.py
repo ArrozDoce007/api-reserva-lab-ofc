@@ -262,9 +262,6 @@ def deletar_usuario(user_id):
         user_matricula = user['matricula']  # Presumindo que 'matricula' existe no registro do usuário
         user_tipo = user.get('tipo_usuario')
 
-        # Deleta rejeições associadas às reservas rejeitadas do usuário
-        cursor.execute('DELETE FROM rejeicoes WHERE pedido_id IN (SELECT id FROM reservas WHERE status = %s)', ('rejeitado',))
-
         # Deleta reservas associadas ao usuário
         cursor.execute('DELETE FROM reservas WHERE user_matricula = %s', (user_matricula,))
 
