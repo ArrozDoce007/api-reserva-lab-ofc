@@ -7,4 +7,4 @@ datetime
 pytz
 werkzeug
 boto3
-requests
+aiosmtplib
