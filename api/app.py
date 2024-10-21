@@ -839,7 +839,7 @@ def rejeitar_pedido(id):
                 <html>
                     <body>
                         <h2>Olá {nome}</h2>
-                        <p>Lamentamos informar que sua reserva para o(a) <strong>{lab_name}</strong> no dia <strong>{formatted_date}</strong> das <strong>{time}</strong> às <strong>{time_fim}</strong> foi <strong style="color: #FF0000;">rejeitada</strong>.</p>
+                        <p>Lamentamos informar que sua reserva para o(a) <strong>{lab_name}</strong> no dia <strong>{formatted_date}</strong> das <strong>{time}</strong> às <strong>{time_fim}</strong> foi <strong style="color: #FF0000;">{new_status}</strong>.</p>
                         <p>Motivo da rejeição: {motivo}</p>
                         <br>
                         <p>Caso tenha dúvidas, entre em contato com a administração.</p>
@@ -907,7 +907,7 @@ def update_reservas_aprj(id):
                 <html>
                     <body>
                         <h2>Olá {nome}</h2>
-                        <p>Sua reserva para o(a) <strong>{lab_name}</strong> no dia <strong>{formatted_date}</strong> das <strong>{time}</strong> às <strong>{time_fim}</strong> foi <strong style="color: #006400;">aprovada</strong>.</p>
+                        <p>Sua reserva para o(a) <strong>{lab_name}</strong> no dia <strong>{formatted_date}</strong> das <strong>{time}</strong> às <strong>{time_fim}</strong> foi <strong style="color: #006400;">{new_status}</strong>.</p>
                         <br>
                         <p>Estamos ansiosos para recebê-lo. Caso tenha dúvidas, entre em contato com a administração.</p>
                         <br>
