@@ -205,7 +205,7 @@ def cadastro():
             </body>
         </html>
         """
-        send_email(email, subject, body)
+        send_email_async(email, subject, body)
 
         return jsonify({'success': True, 'message': 'Cadastro solicitado com sucesso'})
     except Exception as e:
@@ -276,7 +276,7 @@ def deletar_usuario(user_id):
             </body>
         </html>
         """
-        send_email(user_email, subject, body)
+        send_email_async(email, subject, body)
 
         return jsonify({'success': True, 'message': 'Usuário excluído com sucesso'}), 200
     except Exception as e:
@@ -366,7 +366,7 @@ def update_usuario(user_id):
                 </html>
                 """
 
-        send_email(user_email, subject, body)
+        send_email_async(email, subject, body)
 
         return jsonify({"success": True, "message": "Usuário atualizado com sucesso."})
     except Exception as e:
@@ -521,6 +521,7 @@ def edit_lab(lab_id):
         cursor.close()
         db.close()
 
+# Busca a imagem atinga
 def get_old_image_url(cursor, lab_id):
     cursor.execute("SELECT image FROM Laboratorios WHERE id = %s", (lab_id,))
     result = cursor.fetchone()
@@ -616,7 +617,7 @@ def reservas_lab():
                 <h2>Olá {nome}</h2>
                 <p>Sua reserva para o(a) <strong>{lab_name}</strong> no dia <strong>{formatted_date}</strong> das <strong>{time}</strong> às <strong>{time_fim}</strong> foi solicitada.</p>
                 <p>Status: <strong>Pendente de aprovação</strong>.</p>
-                <p>Motivo: {purpose}</p>
+                <p>Finalidade: {purpose}</p>
                 <p>Software específico: {'Sim' if software_especifico else 'Não'}</p>
                 {f'<p>Nome do software: {software_nome}</p>' if software_especifico else ''}
                 <br>
@@ -693,6 +694,73 @@ def get_reservas_por_matricula():
         cursor.close()
         db.close()
 
+# Rota para cancelar solicitação
+@app.route('/reserve/<int:id>', methods=['PUT'])
+def update_reservas(id):
+    db = get_db_connection()
+    if db is None:
+        return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
+
+    cursor = db.cursor(dictionary=True)
+    try:
+        data = request.json
+        new_status = data.get('status')
+
+        if new_status not in ['pendente', 'aprovado', 'cancelado']:
+            return jsonify({"error": "Status inválido"}), 400
+
+        # Atualizar o status da reserva
+        update_query = "UPDATE reservas SET status = %s WHERE id = %s"
+        cursor.execute(update_query, (new_status, id))
+        db.commit()
+
+        if cursor.rowcount == 0:
+            return jsonify({"error": "Reserva não encontrada"}), 404
+
+        # Criar notificação para o usuário
+        cursor.execute("SELECT matricula, lab_name, date FROM reservas WHERE id = %s", (id,))
+        reservation = cursor.fetchone()
+        if reservation:
+            formatted_date = datetime.strptime(reservation['date'], '%Y-%m-%d').strftime('%d-%m-%Y')  # Formatar a data
+            notification_message = f"Sua reserva para {reservation['lab_name']} em {formatted_date} foi {new_status}."
+            create_notification(reservation['matricula'], notification_message)
+
+            # Verificar se o usuário existe
+            cursor.execute('SELECT * FROM usuarios WHERE matricula = %s', (reservation['matricula'],))
+            user = cursor.fetchone()
+
+            if user:
+                email = user['email']
+                nome = reservation['nome']
+                lab_name = reservation['lab_name']
+                time = reservation['time']
+                time_fim = reservation['time_fim']
+                purpose = reservation['purpose']
+
+                # Criar o corpo do e-mail com o status atualizado
+                subject = f"Atualização de Status da Reserva - {new_status.capitalize()}"
+                body = f"""
+                <html>
+                    <body>
+                        <h2>Olá {nome}</h2>
+                        <p>Sua reserva para o(a) <strong>{lab_name}</strong> no dia <strong>{formatted_date}</strong> das <strong>{time}</strong> às <strong>{time_fim}</strong> foi <strong>{new_status}</strong>.</p>
+                        <p>Finalidade: {purpose}</p>
+                        <br>
+                        <p>Caso tenha dúvidas, entre em contato com o administrador.</p>
+                        <br>
+                        <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
+                    </body>
+                </html>
+                """
+                send_email_async(email, subject, body)
+
+        return jsonify({"message": "Status da reserva atualizado com sucesso"}), 200
+    except Exception as e:
+        return jsonify({"error": f"Erro ao atualizar a reserva: {str(e)}"}), 500
+    finally:
+        cursor.close()
+        db.close()
+
 # Rota para obter o motivo de rejeição
 @app.route('/rejeicoes/<int:pedido_id>', methods=['GET'])
 def get_rejeicao(pedido_id):
@@ -709,43 +777,6 @@ def get_rejeicao(pedido_id):
             return jsonify({"error": "Motivo de rejeição não encontrado"}), 404
     except mysql.connector.Error as err:
         return jsonify({"error": f"Erro no banco de dados: {str(err)}"}), 500
-
-# Rota para cancelar solicitação
-@app.route('/reserve/<int:id>', methods=['PUT'])
-def update_reservas(id):
-    db = get_db_connection()
-    if db is None:
-        return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
-
-    cursor = db.cursor(dictionary=True)
-    try:
-        data = request.json
-        new_status = data.get('status')
-
-        if new_status not in ['pendente', 'aprovado', 'cancelado']:
-            return jsonify({"error": "Status inválido"}), 400
-
-        update_query = "UPDATE reservas SET status = %s WHERE id = %s"
-        cursor.execute(update_query, (new_status, id))
-        db.commit()
-
-        if cursor.rowcount == 0:
-            return jsonify({"error": "Reserva não encontrada"}), 404
-
-        # Criar notificação para o usuário
-        cursor.execute("SELECT matricula, lab_name, date FROM reservas WHERE id = %s", (id,))
-        reservation = cursor.fetchone()
-        if reservation:
-            formatted_date = datetime.strptime(reservation['date'], '%Y-%m-%d').strftime('%d-%m-%Y')  # Formatar a data
-            notification_message = f"Sua reserva para {reservation['lab_name']} em {formatted_date} foi {new_status}."
-            create_notification(reservation['matricula'], notification_message)
-
-        return jsonify({"message": "Status da reserva atualizado com sucesso"}), 200
-    except Exception as e:
-        return jsonify({"error": f"Erro ao atualizar a reserva: {str(e)}"}), 500
-    finally:
-        cursor.close()
-        db.close()
 
 # Rota para rejeitar um pedido
 @app.route('/rejeitar/pedido/<int:id>', methods=['POST'])
