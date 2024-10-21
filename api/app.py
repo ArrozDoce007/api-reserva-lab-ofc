@@ -256,26 +256,42 @@ def deletar_usuario(user_id):
         if not user:
             return jsonify({'success': False, 'message': 'Usuário não encontrado'}), 404
 
-        # Recupera o e-mail do usuário
+        # Recupera o e-mail e o nome do usuário
         user_email = user['email']
         user_name = user['nome']
+        user_tipo = user.get('tipo_usuario')
 
         # Exclui o usuário
         cursor.execute('DELETE FROM usuarios WHERE id = %s', (user_id,))
         db.commit()
 
+        # Personaliza o e-mail baseado no tipo de usuário
+        if user_tipo == 'null':
+            subject = "Conta excluída (Tipo null1)"
+            body = f"""
+            <html>
+                <body>
+                    <h1>Olá {user_name}</h1>
+                    <p>Sua solicitação para uso do sistema não foi aceita.</p>
+                    <p>Se você tiver dúvidas ou isso foi um erro, entre em contato com o suporte.</p>
+                    <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
+                </body>
+            </html>
+            """
+        else:
+            subject = "Conta excluída"
+            body = f"""
+            <html>
+                <body>
+                    <h1>Olá {user_name}</h1>
+                    <p>Sua conta foi excluída do sistema de reserva de salas.</p>
+                    <p>Se você não solicitou essa exclusão, entre em contato com o suporte.</p>
+                    <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
+                </body>
+            </html>
+            """
+
         # Enviar e-mail de notificação de exclusão
-        subject = "Conta excluída"
-        body = f"""
-        <html>
-            <body>
-                <h1>Olá {user_name}</h1>
-                <p>Sua conta foi excluída do sistema de reserva de salas.</p>
-                <p>Se você não solicitou essa exclusão, entre em contato com o suporte.</p>
-                <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
-            </body>
-        </html>
-        """
         send_email(user_email, subject, body)
 
         return jsonify({'success': True, 'message': 'Usuário excluído com sucesso'}), 200
