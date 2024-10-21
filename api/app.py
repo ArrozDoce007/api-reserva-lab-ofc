@@ -71,7 +71,7 @@ def delete_from_s3(bucket_name, file_name):
 def format_filename(filename):
     return filename.replace(' ', '_').replace('-', '_')
 
-executor = ThreadPoolExecutor(max_workers=2)
+executor = ThreadPoolExecutor(max_workers=1)
 
 # Função para enviar e-mail
 def send_email(to_email, subject, body):
