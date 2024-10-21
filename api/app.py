@@ -607,7 +607,7 @@ def reservas_lab():
         <html>
             <body>
                 <h2>Olá {nome}</h2>
-                <p>Sua reserva para o laboratório <strong>{lab_name}</strong> no dia <strong>{formatted_date}</strong> das <strong>{time}</strong> às <strong>{time_fim}</strong> foi solicitada.</p>
+                <p>Sua reserva para o(a) <strong>{lab_name}</strong> no dia <strong>{formatted_date}</strong> das <strong>{time}</strong> às <strong>{time_fim}</strong> foi solicitada.</p>
                 <p>Status: <strong>Pendente de aprovação</strong>.</p>
                 <p>Motivo: {purpose}</p>
                 <p>Software específico: {'Sim' if software_especifico else 'Não'}</p>
