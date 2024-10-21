@@ -80,7 +80,7 @@ def send_email(to_email, subject, body):
 
     # Criar mensagem
     message = MIMEMultipart()
-    message["From"] = sender_email
+    message["From"] = "Sistema de Salas"
     message["To"] = to_email
     message["Subject"] = subject
 
