@@ -240,6 +240,7 @@ def get_usuarios():
         db.close()
 
 # Rota para deletar usuários
+# Rota para deletar usuários
 @app.route('/usuarios/deletar/<int:user_id>', methods=['DELETE'])
 def deletar_usuario(user_id):
     db = get_db_connection()
@@ -256,10 +257,20 @@ def deletar_usuario(user_id):
         if not user:
             return jsonify({'success': False, 'message': 'Usuário não encontrado'}), 404
 
-        # Recupera o e-mail e o nome do usuário
+        # Recupera o e-mail, nome e matrícula do usuário
         user_email = user['email']
         user_name = user['nome']
+        user_matricula = user['matricula']  # Presumindo que 'matricula' existe no registro do usuário
         user_tipo = user.get('tipo_usuario')
+
+        # Deleta rejeições associadas às reservas rejeitadas do usuário
+        cursor.execute('DELETE FROM rejeicoes WHERE pedido_id IN (SELECT id FROM reservas WHERE status = %s)', ('rejeitado',))
+
+        # Deleta reservas associadas ao usuário
+        cursor.execute('DELETE FROM reservas WHERE user_matricula = %s', (user_matricula,))
+
+        # Deleta notificações associadas ao usuário
+        cursor.execute('DELETE FROM notifications WHERE user_matricula = %s', (user_matricula,))
 
         # Exclui o usuário
         cursor.execute('DELETE FROM usuarios WHERE id = %s', (user_id,))
@@ -267,7 +278,7 @@ def deletar_usuario(user_id):
 
         # Personaliza o e-mail baseado no tipo de usuário
         if user_tipo == 'null':
-            subject = "Conta excluída (Tipo null1)"
+            subject = "Cadastro negado"
             body = f"""
             <html>
                 <body>
