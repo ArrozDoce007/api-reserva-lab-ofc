@@ -273,7 +273,7 @@ def deletar_usuario(user_id):
             </body>
         </html>
         """
-        send_email_async(user_email, subject, body)
+        send_email(user_email, subject, body)
 
         # Excluir rejeições associadas às reservas rejeitadas do usuário
         cursor.execute('''
