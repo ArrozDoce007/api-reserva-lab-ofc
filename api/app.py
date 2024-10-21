@@ -747,7 +747,7 @@ def update_reservas(id):
                 <html>
                     <body>
                         <h2>Olá {nome}</h2>
-                        <p>Sua reserva para o(a) <strong>{lab_name}</strong> no dia <strong>{formatted_date}</strong> das <strong>{time}</strong> às <strong>{time_fim}</strong> foi <strong>{new_status}</strong>.</p>
+                        <p>Sua reserva para o(a) <strong>{lab_name}</strong> no dia <strong>{formatted_date}</strong> das <strong>{time}</strong> às <strong>{time_fim}</strong> foi <strong style="color: #FF0000;">{new_status}</strong>.</p>
                         <p>Finalidade: {purpose}</p>
                         <p>Software específico: {'Sim' if software_especifico else 'Não'}</p>
                         {f'<p>Nome do software: {software_nome}</p>' if software_especifico else ''}
@@ -839,7 +839,7 @@ def rejeitar_pedido(id):
                 <html>
                     <body>
                         <h2>Olá {nome}</h2>
-                        <p>Lamentamos informar que sua reserva para o(a) <strong>{lab_name}</strong> no dia <strong>{formatted_date}</strong> das <strong>{time}</strong> às <strong>{time_fim}</strong> foi <strong>rejeitada</strong>.</p>
+                        <p>Lamentamos informar que sua reserva para o(a) <strong>{lab_name}</strong> no dia <strong>{formatted_date}</strong> das <strong>{time}</strong> às <strong>{time_fim}</strong> foi <strong style="color: #FF0000;">rejeitada</strong>.</p>
                         <p>Motivo da rejeição: {motivo}</p>
                         <br>
                         <p>Caso tenha dúvidas, entre em contato com a administração.</p>
@@ -858,7 +858,7 @@ def rejeitar_pedido(id):
         cursor.close()
         db.close()
 
-# Rota para aprovar
+# Rota para aprovar um pedido
 @app.route('/aprovar/pedido/<int:id>', methods=['PUT'])
 def update_reservas_aprj(id):
     db = get_db_connection()
@@ -873,6 +873,7 @@ def update_reservas_aprj(id):
         if new_status not in ['pendente', 'aprovado']:
             return jsonify({"error": "Status inválido"}), 400
 
+        # Atualizar o status da reserva
         update_query = "UPDATE reservas SET status = %s WHERE id = %s"
         cursor.execute(update_query, (new_status, id))
         db.commit()
@@ -880,13 +881,43 @@ def update_reservas_aprj(id):
         if cursor.rowcount == 0:
             return jsonify({"error": "Reserva não encontrada"}), 404
 
-        # Criar notificação para o usuário
-        cursor.execute("SELECT matricula, lab_name, date FROM reservas WHERE id = %s", (id,))
+        # Buscar detalhes da reserva e o e-mail do usuário
+        cursor.execute("SELECT matricula, lab_name, date, time, time_fim, nome FROM reservas WHERE id = %s", (id,))
         reservation = cursor.fetchone()
+
         if reservation:
             formatted_date = datetime.strptime(reservation['date'], '%Y-%m-%d').strftime('%d-%m-%Y')  # Formatar a data
             notification_message = f"Sua reserva para {reservation['lab_name']} em {formatted_date} foi {new_status}."
             create_notification(reservation['matricula'], notification_message)
+
+            # Obter o e-mail do usuário no banco de dados
+            cursor.execute('SELECT email FROM usuarios WHERE matricula = %s', (reservation['matricula'],))
+            user = cursor.fetchone()
+
+            if user:
+                email = user['email']
+                nome = reservation['nome']
+                lab_name = reservation['lab_name']
+                time = reservation['time']
+                time_fim = reservation['time_fim']
+
+                # Criar o corpo do e-mail de aprovação
+                subject = "Reserva Aprovada"
+                body = f"""
+                <html>
+                    <body>
+                        <h2>Olá {nome}</h2>
+                        <p>Sua reserva para o(a) <strong>{lab_name}</strong> no dia <strong>{formatted_date}</strong> das <strong>{time}</strong> às <strong>{time_fim}</strong> foi <strong style="color: #006400;">aprovada</strong>.</p>
+                        <br>
+                        <p>Estamos ansiosos para recebê-lo. Caso tenha dúvidas, entre em contato com a administração.</p>
+                        <br>
+                        <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
+                    </body>
+                </html>
+                """
+
+                # Enviar o e-mail de aprovação de forma assíncrona
+                send_email_async(email, subject, body)
 
         return jsonify({"message": "Status da reserva atualizado com sucesso"}), 200
     except Exception as e:
