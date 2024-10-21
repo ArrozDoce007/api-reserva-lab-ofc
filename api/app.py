@@ -313,8 +313,6 @@ def update_usuario(user_id):
 
         user_email = user['email']
         user_name = user['nome']
-        matricula_user = user['matricula']
-        senha_user = user['senha']
         
         old_tipo_usuario = user['tipo_usuario']  # Armazena o tipo de usuário anterior
 
@@ -351,9 +349,6 @@ def update_usuario(user_id):
                         <body>
                             <h1>Olá {user_name}</h1>
                             <p>Seu acesso ao sistema foi aprovado.</p>
-                            <p>Credenciais:</p>
-                            <p><strong>matricula: {matricula_user}</strong></p>
-                            <p><strong>senha: {senha_user}</strong></p>
                             <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
                         </body>
                     </html>
