@@ -71,7 +71,7 @@ def delete_from_s3(bucket_name, file_name):
 def format_filename(filename):
     return filename.replace(' ', '_').replace('-', '_')
 
-executor = ThreadPoolExecutor(max_workers=3)
+executor = ThreadPoolExecutor(max_workers=2)
 
 # Função para enviar e-mail
 def send_email(to_email, subject, body):
@@ -256,10 +256,13 @@ def deletar_usuario(user_id):
         if not user:
             return jsonify({'success': False, 'message': 'Usuário não encontrado'}), 404
 
-        # Recupera o e-mail e o nome do usuário
+        # Recupera o e-mail do usuário
         user_email = user['email']
         user_name = user['nome']
-        user_matricula = user['matricula']
+
+        # Exclui o usuário
+        cursor.execute('DELETE FROM usuarios WHERE id = %s', (user_id,))
+        db.commit()
 
         # Enviar e-mail de notificação de exclusão
         subject = "Conta excluída"
@@ -273,28 +276,9 @@ def deletar_usuario(user_id):
             </body>
         </html>
         """
-        send_email(user_email, subject, body)
+        send_email_async(user_email, subject, body)
 
-        # Excluir rejeições associadas às reservas rejeitadas do usuário
-        cursor.execute('''
-            DELETE FROM rejeicoes
-            WHERE pedido_id IN (SELECT id FROM reservas WHERE matricula = %s AND status = 'rejeitado')
-        ''', (user_matricula,))
-        db.commit()
-
-        # Excluir todas as reservas relacionadas ao usuário
-        cursor.execute('DELETE FROM reservas WHERE matricula = %s', (user_matricula,))
-        db.commit()
-
-        # Excluir notificações associadas ao usuário
-        cursor.execute('DELETE FROM notifications WHERE user_matricula = %s', (user_matricula,))
-        db.commit()
-
-        # Excluir o usuário
-        cursor.execute('DELETE FROM usuarios WHERE id = %s', (user_id,))
-        db.commit()
-
-        return jsonify({'success': True, 'message': 'Usuário, reservas, rejeições e notificações excluídos com sucesso'}), 200
+        return jsonify({'success': True, 'message': 'Usuário excluído com sucesso'}), 200
     except Exception as e:
         print(f"Erro: {e}")
         return jsonify({"error": "Erro ao excluir o usuário"}), 500
