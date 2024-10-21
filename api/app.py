@@ -76,7 +76,7 @@ executor = ThreadPoolExecutor(max_workers=2)
 # Função para enviar e-mail
 def send_email(to_email, subject, body):
     # Configuração do e-mail
-    sender_email = "gui.teste.email.lab@gmail.com"  # Substitua pelo seu e-mail
+    sender_email = "gui.teste.email.lab@gmail.com"
     sender_password = "ozvvmpjttqoogzwn"
     smtp_server = "smtp.gmail.com"
     smtp_port = 587
@@ -259,7 +259,21 @@ def deletar_usuario(user_id):
         # Recupera o e-mail e o nome do usuário
         user_email = user['email']
         user_name = user['nome']
-        user_matricula = user['matricula']  # Presume-se que a matrícula esteja na tabela `usuarios`
+        user_matricula = user['matricula']
+
+        # Enviar e-mail de notificação de exclusão
+        subject = "Conta excluída"
+        body = f"""
+        <html>
+            <body>
+                <h1>Olá {user_name}</h1>
+                <p>Sua conta foi excluída do sistema de reserva de salas.</p>
+                <p>Se você não solicitou essa exclusão, entre em contato com o suporte.</p>
+                <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
+            </body>
+        </html>
+        """
+        send_email_async(user_email, subject, body)
 
         # Excluir rejeições associadas às reservas rejeitadas do usuário
         cursor.execute('''
@@ -279,20 +293,6 @@ def deletar_usuario(user_id):
         # Excluir o usuário
         cursor.execute('DELETE FROM usuarios WHERE id = %s', (user_id,))
         db.commit()
-
-        # Enviar e-mail de notificação de exclusão
-        subject = "Conta excluída"
-        body = f"""
-        <html>
-            <body>
-                <h1>Olá {user_name}</h1>
-                <p>Sua conta foi excluída do sistema de reserva de salas.</p>
-                <p>Se você não solicitou essa exclusão, entre em contato com o suporte.</p>
-                <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
-            </body>
-        </html>
-        """
-        send_email_async(user_email, subject, body)
 
         return jsonify({'success': True, 'message': 'Usuário, reservas, rejeições e notificações excluídos com sucesso'}), 200
     except Exception as e:
