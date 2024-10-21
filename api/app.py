@@ -308,7 +308,7 @@ def deletar_usuario(user_id):
             """
 
         # Enviar e-mail de notificação de exclusão
-        send_email_async(user_email, subject, body)
+        send_email(user_email, subject, body)
 
         return jsonify({'success': True, 'message': 'Usuário, reservas, rejeições e notificações excluídos com sucesso'}), 200
     except Exception as e:
