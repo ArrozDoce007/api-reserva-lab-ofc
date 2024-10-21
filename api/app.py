@@ -240,7 +240,6 @@ def get_usuarios():
         db.close()
 
 # Rota para deletar usuários
-# Rota para deletar usuários
 @app.route('/usuarios/deletar/<int:user_id>', methods=['DELETE'])
 def deletar_usuario(user_id):
     db = get_db_connection()
