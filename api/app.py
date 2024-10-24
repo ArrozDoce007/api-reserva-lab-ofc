@@ -10,6 +10,7 @@ import mysql.connector
 import pytz
 import boto3
 import threading
+import bcrypt
 
 app = Flask(__name__)
 CORS(app)
@@ -143,20 +144,26 @@ def login():
     senha = data.get('senha')
 
     try:
-        cursor.execute('SELECT nome, matricula, tipo_usuario FROM usuarios WHERE matricula = %s AND senha = %s', (matricula, senha))
+        # Busca o usuário pelo número de matrícula
+        cursor.execute('SELECT nome, matricula, senha, tipo_usuario FROM usuarios WHERE matricula = %s', (matricula,))
         user = cursor.fetchone()
 
         if user:
-            tipo_usuario = user['tipo_usuario']
-            if tipo_usuario not in ['adm', 'user']:
-                return jsonify({'success': False, 'message': 'Seu cadastro já foi solicitado e está em análise'}), 403
+            # Verifica se a senha é correta
+            hashed_senha = user['senha']
+            if bcrypt.checkpw(senha.encode('utf-8'), hashed_senha.encode('utf-8')):
+                tipo_usuario = user['tipo_usuario']
+                if tipo_usuario not in ['adm', 'user']:
+                    return jsonify({'success': False, 'message': 'Seu cadastro já foi solicitado e está em análise'}), 403
 
-            return jsonify({
-                'success': True,
-                'nome': user['nome'],
-                'matricula': user['matricula'],
-                'tipo_usuario': tipo_usuario
-            })
+                return jsonify({
+                    'success': True,
+                    'nome': user['nome'],
+                    'matricula': user['matricula'],
+                    'tipo_usuario': tipo_usuario
+                })
+            else:
+                return jsonify({'success': False, 'message': 'Matrícula ou senha inválidos'}), 401
         else:
             return jsonify({'success': False, 'message': 'Matrícula ou senha inválidos'}), 401
     except Exception as e:
@@ -186,10 +193,13 @@ def cadastro():
         if cursor.fetchone():
             return jsonify({'success': False, 'message': 'Matrícula já cadastrada'}), 400
 
-        # Insere o novo usuário com tipo_usuario como NULL
+        # Criptografar a senha usando bcrypt
+        hashed_senha = bcrypt.hashpw(senha.encode('utf-8'), bcrypt.gensalt())
+
+        # Insere o novo usuário com tipo_usuario como NULL e senha criptografada
         cursor.execute(
             'INSERT INTO usuarios (nome, matricula, email, senha, tipo_usuario) VALUES (%s, %s, %s, %s, %s)',
-            (nome, matricula, email, senha, 'null')
+            (nome, matricula, email, hashed_senha.decode('utf-8'), 'null')
         )
         db.commit()
 
@@ -201,6 +211,7 @@ def cadastro():
                 <h1>Olá {nome}</h1>
                 <p>Seu cadastro ao sistema de reserva de salas foi solicitado com sucesso.</p>
                 <p>Aguarde a aprovação do administrador.</p>
+                <br>
                 <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
             </body>
         </html>
@@ -290,6 +301,7 @@ def deletar_usuario(user_id):
                     <h1>Olá {user_name}</h1>
                     <p>Sua solicitação para uso do sistema não foi aceita.</p>
                     <p>Se você tiver dúvidas ou isso foi um erro, entre em contato com o suporte.</p>
+                    <br>
                     <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
                 </body>
             </html>
@@ -302,6 +314,7 @@ def deletar_usuario(user_id):
                     <h1>Olá {user_name}</h1>
                     <p>Sua conta foi excluída do sistema de reserva de salas.</p>
                     <p>Se você não solicitou essa exclusão, entre em contato com o suporte.</p>
+                    <br>
                     <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
                 </body>
             </html>
@@ -370,6 +383,7 @@ def update_usuario(user_id):
                             <h1>Olá {user_name}</h1>
                             <p>Seu acesso ao sistema foi rebaixado para usuário padrão.</p>
                             <p>Se você não solicitou essa alteração, entre em contato com o suporte.</p>
+                            <br>
                             <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
                         </body>
                     </html>
@@ -381,6 +395,9 @@ def update_usuario(user_id):
                         <body>
                             <h1>Olá {user_name}</h1>
                             <p>Seu acesso ao sistema foi aprovado.</p>
+                            <p>Acesse o sistema através do link abaixo.</p>
+                            <a href="https://reserva-lab-uninassau.netlify.app" target="_blank"></a>
+                            <br>
                             <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
                         </body>
                     </html>
@@ -394,6 +411,7 @@ def update_usuario(user_id):
                         <h1>Olá {user_name}</h1>
                         <p>Parabéns! Você foi promovido a Administrador.</p>
                         <p>Se você não solicitou essa alteração, entre em contato com o suporte.</p>
+                        <br>
                         <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
                     </body>
                 </html>
