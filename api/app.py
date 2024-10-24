@@ -109,9 +109,9 @@ def send_email_async(to_email, subject, body):
 def get_db_connection():
     try:
         db = mysql.connector.connect(
-            host="database-1.c9ec8o0ioxuo.us-east-2.rds.amazonaws.com",
-            user="admin",
-            password="26042004",
+            host="localhost",
+            user="root",
+            password="2004",
             database="lab_reservation"
         )
         return db
@@ -889,7 +889,7 @@ def rejeitar_pedido(id):
                 <html>
                     <body>
                         <h2>Olá {nome}</h2>
-                        <p>Lamentamos informar que sua reserva para o(a) <strong>{lab_name}</strong> no dia <strong>{formatted_date}</strong> das <strong>{time}</strong> às <strong>{time_fim}</strong> foi <strong style="color: #FF0000;">{new_status}</strong>.</p>
+                        <p>Lamentamos informar que sua reserva para o(a) <strong>{lab_name}</strong> no dia <strong>{formatted_date}</strong> das <strong>{time}</strong> às <strong>{time_fim}</strong> foi <strong style="color: #FF0000;">rejeitada</strong>.</p>
                         <p>Motivo da rejeição: {motivo}</p>
                         <br>
                         <p>Caso tenha dúvidas, entre em contato com a administração.</p>
