@@ -396,7 +396,7 @@ def update_usuario(user_id):
                             <h1>Olá {user_name}</h1>
                             <p>Seu acesso ao sistema foi aprovado.</p>
                             <p>Acesse o sistema através do link abaixo.</p>
-                            <a href="https://reserva-lab-uninassau.netlify.app" target="_blank"></a>
+                            <a href="https://reserva-lab-uninassau.netlify.app" target="_blank">Sistama de reserva</a>
                             <br>
                             <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
                         </body>
