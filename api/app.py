@@ -5,15 +5,21 @@ from werkzeug.utils import secure_filename
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from concurrent.futures import ThreadPoolExecutor
+from functools import wraps
 import smtplib
 import mysql.connector
 import pytz
 import boto3
 import threading
 import bcrypt
+import jwt
+import datetime
 
 app = Flask(__name__)
 CORS(app)
+
+# Chave secreta usada para assinar os tokens
+SECRET_KEY = "b7317b68218eaab214196004d4a61a39c226350d41d9a1dc8e0412ffb7b38624"
 
 # Limitar o tamanho do upload para 10 MB
 app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10 MB
@@ -104,6 +110,39 @@ def send_email(to_email, subject, body):
 # Função para enviar e-mail de forma assíncrona
 def send_email_async(to_email, subject, body):
     executor.submit(send_email, to_email, subject, body)
+
+# Função para gerar token JWT
+def generate_token(user):
+    payload = {
+        'matricula': user['matricula'],  # Informações do usuário
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=20)
+    }
+    token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
+    return token
+
+# Função para verificar token JWT (decorador)
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        # Verifica se o token está no cabeçalho da requisição
+        if 'Authorization' in request.headers:
+            token = request.headers['Authorization'].split(" ")[1]
+        
+        if not token:
+            return jsonify({'message': 'Token é necessário!'}), 401
+
+        try:
+            # Decodifica o token
+            data = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+            matricula = data['matricula']  # Matricula extraída do token
+        except jwt.ExpiredSignatureError:
+            return jsonify({'message': 'Token expirado!'}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({'message': 'Token inválido!'}), 401
+
+        return f(matricula, *args, **kwargs)
+    return decorated
         
 # Função para conectar ao banco de dados
 def get_db_connection():
@@ -124,14 +163,14 @@ def get_db_connection():
 def get_brasilia_time():
     try:
         brasilia_tz = pytz.timezone('America/Sao_Paulo')
-        brasilia_time = datetime.now(brasilia_tz)
+        brasilia_time = datetime.datetime.now(brasilia_tz)
         formatted_time = brasilia_time.strftime('%Y-%m-%dT%H:%M:%S')
         return jsonify({'datetime': formatted_time})
     except Exception as e:
         print(f"Erro: {e}")
         return jsonify({"error": "Erro ao obter a data e hora atual"}), 500
         
-# Rota para logar na página inicial
+# Rota para logar na página inicial e gerar JWT
 @app.route('/login', methods=['POST'])
 def login():
     db = get_db_connection()
@@ -154,13 +193,17 @@ def login():
             if bcrypt.checkpw(senha.encode('utf-8'), hashed_senha.encode('utf-8')):
                 tipo_usuario = user['tipo_usuario']
                 if tipo_usuario not in ['adm', 'user']:
-                    return jsonify({'success': False, 'message': 'Seu cadastro já foi solicitado e está em análise'}), 403
+                    return jsonify({'success': False, 'message': 'Seu cadastro está em análise'}), 403
+
+                # Gera o token JWT
+                token = generate_token(user)
 
                 return jsonify({
                     'success': True,
                     'nome': user['nome'],
                     'matricula': user['matricula'],
-                    'tipo_usuario': tipo_usuario
+                    'tipo_usuario': tipo_usuario,
+                    'token': token  # Retorna o token JWT
                 })
             else:
                 return jsonify({'success': False, 'message': 'Matrícula ou senha inválidos'}), 401
@@ -194,7 +237,7 @@ def cadastro():
             return jsonify({'success': False, 'message': 'Matrícula já cadastrada'}), 400
 
         # Criptografar a senha usando bcrypt
-        hashed_senha = bcrypt.hashpw(senha.encode('utf-8'), bcrypt.gensalt(15))
+        hashed_senha = bcrypt.hashpw(senha.encode('utf-8'), bcrypt.gensalt(12))
 
         # Insere o novo usuário com tipo_usuario como NULL e senha criptografada
         cursor.execute(
