@@ -271,6 +271,7 @@ def cadastro():
 
 # Rota para buscar usuarios
 @app.route('/usuarios', methods=['GET'])
+@token_required
 def get_usuarios():
     db = get_db_connection()
     if db is None:
