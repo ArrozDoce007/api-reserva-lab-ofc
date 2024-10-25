@@ -194,7 +194,7 @@ def cadastro():
             return jsonify({'success': False, 'message': 'Matrícula já cadastrada'}), 400
 
         # Criptografar a senha usando bcrypt
-        hashed_senha = bcrypt.hashpw(senha.encode('utf-8'), bcrypt.gensalt())
+        hashed_senha = bcrypt.hashpw(senha.encode('utf-8'), bcrypt.gensalt(15))
 
         # Insere o novo usuário com tipo_usuario como NULL e senha criptografada
         cursor.execute(
