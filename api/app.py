@@ -734,9 +734,10 @@ def reservas_lab():
         cursor.close()
         db.close()
 
-# Rota para obter o reserva geral
+# Rota para obter as reservas gerais
 @app.route('/reserve/status/geral', methods=['GET'])
-def get_reservas_geral():
+@token_required  # Decorador para proteger a rota
+def get_reservas_geral(matricula):
     db = get_db_connection()
     if db is None:
         return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
@@ -756,7 +757,8 @@ def get_reservas_geral():
 
 # Rota para obter o reserva por matrícula
 @app.route('/reserve/status', methods=['GET'])
-def get_reservas_por_matricula():
+@token_required  # Decorador para proteger a rota
+def get_reservas_por_matricula(matricula):
     db = get_db_connection()
     if db is None:
         return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
