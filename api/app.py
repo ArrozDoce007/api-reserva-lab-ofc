@@ -269,10 +269,10 @@ def cadastro():
         cursor.close()
         db.close()
 
-# Rota para buscar usuarios
+# Rota para buscar usuários
 @app.route('/usuarios', methods=['GET'])
-@token_required
-def get_usuarios():
+@token_required  # Decorador para proteger a rota
+def get_usuarios(matricula):  # Recebe a matrícula do token
     db = get_db_connection()
     if db is None:
         return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
@@ -280,6 +280,7 @@ def get_usuarios():
     cursor = db.cursor(dictionary=True)
 
     try:
+        # Aqui você pode usar a matrícula se precisar filtrar os usuários
         cursor.execute('SELECT * FROM usuarios')
         usuarios = cursor.fetchall()
 
