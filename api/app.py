@@ -115,7 +115,7 @@ def send_email_async(to_email, subject, body):
 def generate_token(user):
     payload = {
         'matricula': user['matricula'],  # Informações do usuário
-        'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=20)
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=1)
     }
     token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
     return token
