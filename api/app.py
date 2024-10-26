@@ -162,7 +162,7 @@ def get_db_connection():
 def get_brasilia_time():
     try:
         brasilia_tz = pytz.timezone('America/Sao_Paulo')
-        brasilia_time = datetime.datetime.now(brasilia_tz)
+        brasilia_time = datetime.now(brasilia_tz)
         formatted_time = brasilia_time.strftime('%Y-%m-%dT%H:%M:%S')
         return jsonify({'datetime': formatted_time})
     except Exception as e:
