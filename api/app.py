@@ -474,7 +474,8 @@ def update_usuario(user_id):
         
 # Rota para obter os laboratórios
 @app.route('/laboratorios', methods=['GET'])
-def get_laboratorios():
+@token_required  # Decorador para proteger a rota
+def get_laboratorios(matricula):
     db = get_db_connection()
     if db is None:
         return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
