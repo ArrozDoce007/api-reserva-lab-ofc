@@ -894,6 +894,7 @@ def rejeitar_pedido(id):
     try:
         data = request.json
         motivo = data.get('motivo')
+        new_status = data.get('status')
 
         if not motivo:
             return jsonify({"error": "Motivo é obrigatório"}), 400
@@ -917,7 +918,7 @@ def rejeitar_pedido(id):
 
         if reservation:
             formatted_date = datetime.strptime(reservation['date'], '%Y-%m-%d').strftime('%d-%m-%Y')  # Formatar a data
-            notification_message = f"Sua reserva para {reservation['lab_name']} em {formatted_date} foi rejeitada. Motivo: {motivo}."
+            notification_message = f"Sua reserva para {reservation['lab_name']} em {formatted_date} foi {new_status}. Motivo: {motivo}."
             create_notification(reservation['matricula'], notification_message)
 
             # Obter o e-mail do usuário no banco de dados
@@ -937,7 +938,7 @@ def rejeitar_pedido(id):
                 <html>
                     <body>
                         <h2>Olá {nome}</h2>
-                        <p>Lamentamos informar que sua reserva para o(a) <strong>{lab_name}</strong> no dia <strong>{formatted_date}</strong> das <strong>{time}</strong> às <strong>{time_fim}</strong> foi <strong style="color: #FF0000;">rejeitada</strong>.</p>
+                        <p>Lamentamos informar que sua reserva para o(a) <strong>{lab_name}</strong> no dia <strong>{formatted_date}</strong> das <strong>{time}</strong> às <strong>{time_fim}</strong> foi <strong style="color: #FF0000;">{new_status}</strong>.</p>
                         <p>Motivo da rejeição: {motivo}</p>
                         <br>
                         <p>Caso tenha dúvidas, entre em contato com a administração.</p>
