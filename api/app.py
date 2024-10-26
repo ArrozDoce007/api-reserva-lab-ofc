@@ -894,14 +894,14 @@ def rejeitar_pedido(id):
     try:
         data = request.json
         motivo = data.get('motivo')
-        new_status = data.get('status')
+        new_status = data.get('status', 'rejeitado')  # Define 'rejeitado' como padrão caso o status não seja enviado
 
         if not motivo:
             return jsonify({"error": "Motivo é obrigatório"}), 400
 
-        # Atualiza o status do pedido para rejeitado
+        # Atualiza o status do pedido para o valor de new_status
         update_query = "UPDATE reservas SET status = %s WHERE id = %s"
-        cursor.execute(update_query, ('rejeitado', id))
+        cursor.execute(update_query, (new_status, id))
         db.commit()
 
         if cursor.rowcount == 0:
