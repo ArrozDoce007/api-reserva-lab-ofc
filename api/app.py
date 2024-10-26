@@ -13,7 +13,6 @@ import boto3
 import threading
 import bcrypt
 import jwt
-import datetime
 
 app = Flask(__name__)
 CORS(app)
