@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from datetime import datetime
+from datetime import datetime  # Importando a classe datetime
+from datetime import timedelta  # Importando timedelta diretamente
 from werkzeug.utils import secure_filename
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -114,7 +115,7 @@ def send_email_async(to_email, subject, body):
 def generate_token(user):
     payload = {
         'matricula': user['matricula'],  # Informações do usuário
-        'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=20)
+        'exp': datetime.utcnow() + timedelta(minutes=20)
     }
     token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
     return token
