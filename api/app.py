@@ -379,7 +379,8 @@ def deletar_usuario(matricula, user_id):
 
 # Rota para atualizar um usuário
 @app.route('/usuarios/atualizar/<int:user_id>', methods=['PUT'])
-def update_usuario(user_id):
+@token_required  # Decorador para proteger a rota
+def update_usuario(matricula, user_id):
     db = get_db_connection()
     if db is None:
         return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
