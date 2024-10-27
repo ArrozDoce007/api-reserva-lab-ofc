@@ -298,7 +298,7 @@ def get_usuarios(matricula):  # Recebe a matrícula do token
 # Rota para deletar usuários
 @app.route('/usuarios/deletar/<int:user_id>', methods=['DELETE'])
 @token_required  # Decorador para proteger a rota
-def deletar_usuario(user_id, matricula):
+def deletar_usuario(matricula, user_id):
     db = get_db_connection()
     if db is None:
         return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
