@@ -497,7 +497,8 @@ def get_laboratorios(matricula):
 
 # Rota para criar laboratórios/salas
 @app.route('/laboratorios/criar', methods=['POST'])
-def criar_sala():
+@token_required  # Decorador para proteger a rota
+def criar_sala(matricula):
     if 'roomImage' not in request.files or request.files['roomImage'].filename == '':
         return jsonify({'message': 'Imagem não fornecida ou inválida'}), 400
     
