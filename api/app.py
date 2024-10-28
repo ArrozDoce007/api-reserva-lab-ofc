@@ -630,7 +630,8 @@ def get_old_image_url(cursor, lab_id):
 
 # Rota para deletar laboratórios/salas
 @app.route('/laboratorios/deletar/<int:lab_id>', methods=['DELETE'])
-def delete_lab(lab_id):
+@token_required  # Decorador para proteger a rota
+def delete_lab(matricula, lab_id):
     db = get_db_connection()
     if db is None:
         return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
