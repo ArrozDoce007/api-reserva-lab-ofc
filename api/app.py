@@ -712,7 +712,8 @@ def delete_lab(matricula, lab_id):
 
 # Rota para fazer a reserva
 @app.route('/reserve', methods=['POST'])
-def reservas_lab():
+@token_required  # Decorador para proteger a rota
+def reservas_lab(matricula):
     db = get_db_connection()
     if db is None:
         return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
@@ -843,7 +844,8 @@ def get_reservas_por_matricula(matricula):
 
 # Rota para cancelar solicitação
 @app.route('/reserve/cancelar/<int:id>', methods=['PUT'])
-def update_reservas(id):
+@token_required  # Decorador para proteger a rota
+def update_reservas(matricula, id):
     db = get_db_connection()
     if db is None:
         return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
@@ -933,7 +935,8 @@ def get_rejeicao(pedido_id):
 
 # Rota para rejeitar um pedido
 @app.route('/rejeitar/pedido/<int:id>', methods=['POST'])
-def rejeitar_pedido(id):
+@token_required  # Decorador para proteger a rota
+def rejeitar_pedido(matricula, id):
     db = get_db_connection()
     if db is None:
         return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
@@ -1007,7 +1010,8 @@ def rejeitar_pedido(id):
 
 # Rota para aprovar um pedido
 @app.route('/aprovar/pedido/<int:id>', methods=['PUT'])
-def update_reservas_aprj(id):
+@token_required  # Decorador para proteger a rota
+def update_reservas_aprj(matricula, id):
     db = get_db_connection()
     if db is None:
         return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
