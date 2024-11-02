@@ -423,6 +423,7 @@ def aprove_usuario(matricula, user_id):
                 <p>Seu acesso ao sistema foi aprovado.</p>
                 <p>Acesse o sistema através do link abaixo.</p>
                 <a href="https://reserva-salas-uninassau.netlify.app" target="_blank">Sistema de reserva</a>
+                <br>
                 <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
             </body>
         </html>
