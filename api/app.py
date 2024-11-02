@@ -184,15 +184,15 @@ def login():
 
     try:
         # Busca o usuário pelo número de matrícula
-        cursor.execute('SELECT nome, matricula, senha, tipo_usuario FROM usuarios WHERE matricula = %s', (matricula,))
+        cursor.execute('SELECT nome, matricula, senha, tipo_usuario, acesso FROM usuarios WHERE matricula = %s', (matricula,))
         user = cursor.fetchone()
 
         if user:
             # Verifica se a senha é correta
             hashed_senha = user['senha']
             if bcrypt.checkpw(senha.encode('utf-8'), hashed_senha.encode('utf-8')):
-                tipo_usuario = user['tipo_usuario']
-                if tipo_usuario not in ['adm', 'user']:
+                acesso = user['acesso']
+                if acesso != 1:
                     return jsonify({'success': False, 'message': 'Seu cadastro está em análise'}), 403
 
                 # Gera o token JWT
@@ -202,7 +202,7 @@ def login():
                     'success': True,
                     'nome': user['nome'],
                     'matricula': user['matricula'],
-                    'tipo_usuario': tipo_usuario,
+                    'tipo_usuario': user['tipo_usuario'],
                     'token': token  # Retorna o token JWT
                 })
             else:
@@ -229,6 +229,7 @@ def cadastro():
     matricula = data.get('matricula')
     email = data.get('email')
     senha = data.get('senha')
+    tipo_usuario = data.get('tipoUsuario')
 
     try:
         # Verifica se a matrícula já existe
@@ -239,10 +240,10 @@ def cadastro():
         # Criptografar a senha usando bcrypt
         hashed_senha = bcrypt.hashpw(senha.encode('utf-8'), bcrypt.gensalt(12))
 
-        # Insere o novo usuário com tipo_usuario como NULL e senha criptografada
+        # Insere o novo usuário fornecido e a senha criptografada
         cursor.execute(
             'INSERT INTO usuarios (nome, matricula, email, senha, tipo_usuario) VALUES (%s, %s, %s, %s, %s)',
-            (nome, matricula, email, hashed_senha.decode('utf-8'), 'null')
+            (nome, matricula, email, hashed_senha.decode('utf-8'), tipo_usuario)
         )
         db.commit()
 
@@ -253,7 +254,7 @@ def cadastro():
             <body>
                 <h1>Olá {nome}</h1>
                 <p>Seu cadastro ao sistema de reserva de salas foi solicitado com sucesso.</p>
-                <p>Aguarde a aprovação do administrador.</p>
+                <p>Aguarde a aprovação do Administradorinistrador.</p>
                 <br>
                 <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
             </body>
@@ -376,6 +377,66 @@ def deletar_usuario(matricula, user_id):
     finally:
         cursor.close()
         db.close()
+        
+# Rota para aprovar um usuário
+@app.route('/usuarios/aprovar/<int:user_id>', methods=['PUT'])
+@token_required  # Decorador para proteger a rota
+def aprove_usuario(matricula, user_id):
+    db = get_db_connection()
+    if db is None:
+        return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
+
+    cursor = db.cursor(dictionary=True)
+    
+    # Obtém os dados do corpo da requisição
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Dados não fornecidos"}), 400
+    
+    # Atualiza o campo 'acesso' para 1 ao aprovar o usuário
+    try:
+        # Recupera o usuário para obter o e-mail e nome
+        cursor.execute('SELECT * FROM usuarios WHERE id = %s', (user_id,))
+        user = cursor.fetchone()
+
+        if not user:
+            return jsonify({"error": "Usuário não encontrado"}), 404
+
+        user_email = user['email']
+        user_name = user['nome']
+        
+        # Atualiza o acesso para 1
+        cursor.execute('UPDATE usuarios SET acesso = 1 WHERE id = %s', (user_id,))
+        
+        # Verifica se a atualização foi feita
+        if cursor.rowcount == 0:
+            return jsonify({"error": "Usuário não encontrado ou acesso já concedido"}), 404
+
+        db.commit()
+
+        # Enviar e-mail de aprovação
+        subject = "Aprovação de Usuário"
+        body = f"""
+        <html>
+            <body>
+                <h1>Olá {user_name}</h1>
+                <p>Seu acesso ao sistema foi aprovado.</p>
+                <p>Acesse o sistema através do link abaixo.</p>
+                <a href="https://reserva-salas-uninassau.netlify.app" target="_blank">Sistema de reserva</a>
+                <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
+            </body>
+        </html>
+        """
+
+        send_email(user_email, subject, body)
+
+        return jsonify({"success": True, "message": "Usuário aprovado com sucesso."})
+    except Exception as e:
+        print(f"Erro: {e}")
+        return jsonify({"error": "Erro ao atualizar o usuário"}), 500
+    finally:
+        cursor.close()
+        db.close()
 
 # Rota para atualizar um usuário
 @app.route('/usuarios/atualizar/<int:user_id>', methods=['PUT'])
@@ -405,8 +466,6 @@ def update_usuario(matricula, user_id):
 
         user_email = user['email']
         user_name = user['nome']
-        
-        old_tipo_usuario = user['tipo_usuario']  # Armazena o tipo de usuário anterior
 
         # Atualiza o tipo de usuário
         cursor.execute('UPDATE usuarios SET tipo_usuario = %s WHERE id = %s', (tipo_usuario, user_id))
@@ -420,49 +479,33 @@ def update_usuario(matricula, user_id):
         subject = ""
         body = ""
 
-        if old_tipo_usuario != tipo_usuario:
-            if tipo_usuario == 'user':
-                if old_tipo_usuario == 'adm':
-                    subject = "Rebaixamento de Usuário"
-                    body = f"""
-                    <html>
-                        <body>
-                            <h1>Olá {user_name}</h1>
-                            <p>Seu acesso ao sistema foi rebaixado para usuário padrão.</p>
-                            <p>Se você não solicitou essa alteração, entre em contato com o suporte.</p>
-                            <br>
-                            <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
-                        </body>
-                    </html>
-                    """
-                else:
-                    subject = "Aprovação de Usuário"
-                    body = f"""
-                    <html>
-                        <body>
-                            <h1>Olá {user_name}</h1>
-                            <p>Seu acesso ao sistema foi aprovado.</p>
-                            <p>Acesse o sistema através do link abaixo.</p>
-                            <a href="https://reserva-salas-uninassau.netlify.app" target="_blank">Sistama de reserva</a>
-                            <br>
-                            <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
-                        </body>
-                    </html>
-                    """
+        if tipo_usuario != 'Administrador':
+            subject = "Rebaixamento de Usuário"
+            body = f"""
+            <html>
+                <body>
+                    <h1>Olá {user_name}</h1>
+                    <p>Seu acesso ao sistema foi rebaixado, você não é mais um administrador.</p>
+                    <p>Se você não solicitou essa alteração, entre em contato com o suporte.</p>
+                    <br>
+                    <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
+                </body>
+            </html>
+            """
                 
-            elif tipo_usuario == 'adm':
-                subject = "Promoção para Administrador"
-                body = f"""
-                <html>
-                    <body>
-                        <h1>Olá {user_name}</h1>
-                        <p>Parabéns! Você foi promovido a Administrador.</p>
-                        <p>Se você não solicitou essa alteração, entre em contato com o suporte.</p>
-                        <br>
-                        <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
-                    </body>
-                </html>
-                """
+        elif tipo_usuario == 'Administrador':
+            subject = "Promoção para Administrador"
+            body = f"""
+            <html>
+                <body>
+                    <h1>Olá {user_name}</h1>
+                    <p>Parabéns! Você foi promovido a administrador.</p>
+                    <p>Se você não solicitou essa alteração, entre em contato com o suporte.</p>
+                    <br>
+                    <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
+                </body>
+            </html>
+            """
 
         send_email(user_email, subject, body)
 
@@ -723,7 +766,7 @@ def reservas_lab():
                 <p>Software específico: {'Sim' if software_especifico else 'Não'}</p>
                 {f'<p>Nome do software: {software_nome}</p>' if software_especifico else ''}
                 <br>
-                <p>Aguarde a aprovação do administrador.</p>
+                <p>Aguarde a aprovação do Administradorinistrador.</p>
                 <br>
                 <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
             </body>
@@ -855,7 +898,7 @@ def update_reservas(id):
                         <p>Software específico: {'Sim' if software_especifico else 'Não'}</p>
                         {f'<p>Nome do software: {software_nome}</p>' if software_especifico else ''}
                         <br>
-                        <p>Caso tenha dúvidas, entre em contato com a administração.</p>
+                        <p>Caso tenha dúvidas, entre em contato com a Administradorinistração.</p>
                         <br>
                         <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
                     </body>
@@ -946,7 +989,7 @@ def rejeitar_pedido(id):
                         <p>Lamentamos informar que sua reserva para o(a) <strong>{lab_name}</strong> no dia <strong>{formatted_date}</strong> das <strong>{time}</strong> às <strong>{time_fim}</strong> foi <strong style="color: #FF0000;">{new_status}</strong>.</p>
                         <p>Motivo da rejeição: {motivo}</p>
                         <br>
-                        <p>Caso tenha dúvidas, entre em contato com a administração.</p>
+                        <p>Caso tenha dúvidas, entre em contato com a Administradorinistração.</p>
                         <br>
                         <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
                     </body>
@@ -1013,7 +1056,7 @@ def update_reservas_aprj(id):
                         <h2>Olá {nome}</h2>
                         <p>Sua reserva para o(a) <strong>{lab_name}</strong> no dia <strong>{formatted_date}</strong> das <strong>{time}</strong> às <strong>{time_fim}</strong> foi <strong style="color: #006400;">{new_status}</strong>.</p>
                         <br>
-                        <p>Estamos ansiosos para recebê-lo. Caso tenha dúvidas, entre em contato com a administração.</p>
+                        <p>Estamos ansiosos para recebê-lo. Caso tenha dúvidas, entre em contato com a Administradorinistração.</p>
                         <br>
                         <img src="https://reserva-lab-nassau.s3.amazonaws.com/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
                     </body>
