@@ -9,3 +9,4 @@ werkzeug
 boto3
 bcrypt
 pyjwt
+python-dotenv
