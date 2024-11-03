@@ -87,7 +87,7 @@ def send_email(to_email, subject, body):
     sender_email = os.getenv("EMAIL")
     sender_password = os.getenv("EMAIL_PASSWORD")
     smtp_server = os.getenv("EMAIL_SERVER")
-    smtp_port = 587
+    smtp_port = os.getenv("PORT")
 
     # Criar mensagem
     message = MIMEMultipart()
