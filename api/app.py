@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from datetime import datetime  # Importando a classe datetime
-from datetime import timedelta  # Importando timedelta diretamente
+from datetime import datetime
+from datetime import timedelta 
 from werkzeug.utils import secure_filename
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
