@@ -1,13 +1,166 @@
-from flask import request, jsonify
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 from datetime import datetime
+from datetime import timedelta
 from werkzeug.utils import secure_filename
-from flask import request, jsonify
-from config import app
-from functions import (allowed_file, upload_to_s3, check_image_exists, delete_from_s3, format_filename, send_email_async, send_email, generate_token, token_required, get_db_connection)
-from config import AWS_S3_BUCKET_NAME
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from concurrent.futures import ThreadPoolExecutor
+from functools import wraps
+from dotenv import load_dotenv
+import os
+import smtplib
 import mysql.connector
 import pytz
+import boto3
+import threading
 import bcrypt
+import jwt
+
+app = Flask(__name__)
+CORS(app)
+
+load_dotenv()
+
+# Limitar o tamanho do upload para 10 MB
+app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10 MB
+
+# Gerenciamento de erros para arquivo muito grande
+@app.errorhandler(413)
+def request_entity_too_large(error):
+    return jsonify({'error': 'O arquivo enviado é muito grande. O tamanho máximo permitido é de 10 MB.'}), 413
+
+sala_lock = threading.Lock()
+
+# Configurações do S3
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+AWS_S3_BUCKET_NAME = os.getenv("AWS_S3_BUCKET_NAME")
+
+s3_client = boto3.client(
+    's3',
+    aws_access_key_id=AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+    region_name='us-east-2'
+)
+
+def allowed_file(filename):
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def upload_to_s3(file_obj, bucket_name, file_name):
+    try:
+        s3_client.upload_fileobj(file_obj, bucket_name, file_name)
+        file_url = f"https://{bucket_name}.s3.amazonaws.com/{file_name}"
+        return file_url
+    except Exception as e:
+        print(f"Erro ao fazer upload para o S3: {e}")
+        return None
+
+def check_image_exists(bucket_name, filename):
+    try:
+        s3_client.head_object(Bucket=bucket_name, Key=filename)
+        return True  # A imagem já existe
+    except Exception as e:
+        if e.response['Error']['Code'] == '404':
+            return False  # A imagem não existe
+        else:
+            print(f'Erro ao verificar a imagem no S3: {e}')
+            return False
+
+def delete_from_s3(bucket_name, file_name):
+    try:
+        s3_client.delete_object(Bucket=bucket_name, Key=file_name)
+        print(f"Imagem {file_name} deletada do S3 com sucesso.")
+    except Exception as e:
+        print(f"Erro ao deletar a imagem do S3: {e}")
+
+# Função para substituir espaços por underscore
+def format_filename(filename):
+    return filename.replace(' ', '_').replace('-', '_')
+
+executor = ThreadPoolExecutor(max_workers=2)
+
+# Função para enviar e-mail
+def send_email(to_email, subject, body):
+    # Configuração do e-mail
+    sender_email = os.getenv("EMAIL")
+    sender_password = os.getenv("EMAIL_PASSWORD")
+    smtp_server = os.getenv("EMAIL_SERVER")
+    smtp_port = 587
+
+    # Criar mensagem
+    message = MIMEMultipart()
+    message["From"] = "Sistema de Salas"
+    message["To"] = to_email
+    message["Subject"] = subject
+
+    # Anexando o corpo HTML
+    message.attach(MIMEText(body, "html"))
+    
+    # Enviar e-mail
+    try:
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()
+            server.login(sender_email, sender_password)
+            server.send_message(message)
+        print(f"Email enviado com sucesso para {to_email}")
+    except Exception as e:
+        print(f"Erro ao enviar e-mail: {e}")
+
+# Função para enviar e-mail de forma assíncrona
+def send_email_async(to_email, subject, body):
+    executor.submit(send_email, to_email, subject, body)
+    
+# Chave secreta usada para assinar os tokens
+SECRET_KEY = os.getenv("SECRET_KEY")
+
+# Função para gerar token JWT
+def generate_token(user):
+    payload = {
+        'matricula': user['matricula'],  # Informações do usuário
+        'exp': datetime.utcnow() + timedelta(minutes=20)
+    }
+    token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
+    return token
+
+# Função para verificar token JWT (decorador)
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        # Verifica se o token está no cabeçalho da requisição
+        if 'Authorization' in request.headers:
+            token = request.headers['Authorization'].split(" ")[1]
+        
+        if not token:
+            return jsonify({'message': 'Token é necessário!'}), 401
+
+        try:
+            # Decodifica o token
+            data = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+            matricula = data['matricula']  # Matricula extraída do token
+        except jwt.ExpiredSignatureError:
+            return jsonify({'message': 'Token expirado!'}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({'message': 'Token inválido!'}), 401
+
+        return f(matricula, *args, **kwargs)
+    return decorated
+        
+# Função para conectar ao banco de dados
+def get_db_connection():
+    try:
+        db = mysql.connector.connect(
+            host = os.getenv("DB_HOST"),
+            user = os.getenv("DB_USER"),
+            password = os.getenv("DB_PASSWORD"),
+            database = os.getenv("DB_NAME")
+        )
+        return db
+    except mysql.connector.Error as err:
+        print(f"Erro ao conectar ao banco de dados: {err}")
+        return None
 
 # Rota data e hora
 @app.route('/time/brazilia', methods=['GET'])
@@ -411,28 +564,30 @@ def criar_sala(matricula):
 
         cursor = db.cursor()
         try:
-            # Verifica se a sala já existe
-            cursor.execute('SELECT COUNT(*) FROM Laboratorios WHERE name = %s', (room_name,))
-            exists = cursor.fetchone()[0]  # Modificado para obter o primeiro elemento
+            # Usa o lock para proteger a seção crítica
+            with sala_lock:
+                # Verifica se a sala já existe
+                cursor.execute('SELECT COUNT(*) FROM Laboratorios WHERE name = %s', (room_name,))
+                exists = cursor.fetchone()[0]  # Modificado para obter o primeiro elemento
 
-            if exists > 0:
-                return jsonify({'message': 'Já existe uma sala com este nome. Por favor, escolha outro nome.'}), 400
+                if exists > 0:
+                    return jsonify({'message': 'Já existe uma sala com este nome. Por favor, escolha outro nome.'}), 400
 
-            # Verifica se a imagem já existe no S3
-            if check_image_exists(AWS_S3_BUCKET_NAME, filename):
-                return jsonify({'message': 'Já existe uma imagem com este nome. Por favor, escolha outro nome.'}), 400
+                # Verifica se a imagem já existe no S3
+                if check_image_exists(AWS_S3_BUCKET_NAME, filename):
+                    return jsonify({'message': 'Já existe uma imagem com este nome. Por favor, escolha outro nome.'}), 400
 
-            # Faz upload da imagem para o S3
-            image_url = upload_to_s3(room_image, AWS_S3_BUCKET_NAME, filename)
+                # Faz upload da imagem para o S3
+                image_url = upload_to_s3(room_image, AWS_S3_BUCKET_NAME, filename)
                 
-            if image_url is None:
-                return jsonify({'message': 'Erro ao fazer upload da imagem para o S3'}), 500
+                if image_url is None:
+                    return jsonify({'message': 'Erro ao fazer upload da imagem para o S3'}), 500
 
-            # Inserir dados no banco de dados
-            cursor.execute('INSERT INTO Laboratorios (name, capacity, description, image) VALUES (%s, %s, %s, %s)',
-            (room_name, room_capacity, room_description, image_url))
-            db.commit()
-            return jsonify({'message': 'Sala criada com sucesso!', 'image_url': image_url}), 201
+                # Inserir dados no banco de dados
+                cursor.execute('INSERT INTO Laboratorios (name, capacity, description, image) VALUES (%s, %s, %s, %s)',
+                               (room_name, room_capacity, room_description, image_url))
+                db.commit()
+                return jsonify({'message': 'Sala criada com sucesso!', 'image_url': image_url}), 201
         except Exception as e:
             print(f'Erro ao inserir no banco: {e}')
             db.rollback()  # Reverte a transação em caso de erro
