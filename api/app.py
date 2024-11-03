@@ -1,5 +1,4 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+from flask import request, jsonify
 from datetime import datetime
 from werkzeug.utils import secure_filename
 from flask import request, jsonify
@@ -9,9 +8,6 @@ from config import AWS_S3_BUCKET_NAME
 import mysql.connector
 import pytz
 import bcrypt
-
-app = Flask(__name__)
-CORS(app)
 
 # Rota data e hora
 @app.route('/time/brazilia', methods=['GET'])
