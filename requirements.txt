@@ -10,3 +10,4 @@ boto3
 bcrypt
 pyjwt
 python-dotenv
+os
