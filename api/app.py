@@ -7,6 +7,8 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from concurrent.futures import ThreadPoolExecutor
 from functools import wraps
+from dotenv import load_dotenv
+import os
 import smtplib
 import mysql.connector
 import pytz
@@ -18,8 +20,7 @@ import jwt
 app = Flask(__name__)
 CORS(app)
 
-# Chave secreta usada para assinar os tokens
-SECRET_KEY = "b7317b68218eaab214196004d4a61a39c226350d41d9a1dc8e0412ffb7b38624"
+load_dotenv()
 
 # Limitar o tamanho do upload para 10 MB
 app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10 MB
@@ -32,9 +33,9 @@ def request_entity_too_large(error):
 sala_lock = threading.Lock()
 
 # Configurações do S3
-AWS_ACCESS_KEY_ID = 'AKIA46ZDE6JYQL3P3EHE'
-AWS_SECRET_ACCESS_KEY = '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'
-AWS_S3_BUCKET_NAME = 'reserva-lab-nassau'
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+AWS_S3_BUCKET_NAME = os.getenv("AWS_S3_BUCKET_NAME")
 
 s3_client = boto3.client(
     's3',
@@ -83,9 +84,9 @@ executor = ThreadPoolExecutor(max_workers=2)
 # Função para enviar e-mail
 def send_email(to_email, subject, body):
     # Configuração do e-mail
-    sender_email = "gui.teste.email.lab@gmail.com"
-    sender_password = "ozvvmpjttqoogzwn"
-    smtp_server = "smtp.gmail.com"
+    sender_email = os.getenv("EMAIL")
+    sender_password = os.getenv("EMAIL_PASSWORD")
+    smtp_server = os.getenv("EMAIL_SERVER")
     smtp_port = 587
 
     # Criar mensagem
@@ -110,6 +111,9 @@ def send_email(to_email, subject, body):
 # Função para enviar e-mail de forma assíncrona
 def send_email_async(to_email, subject, body):
     executor.submit(send_email, to_email, subject, body)
+    
+# Chave secreta usada para assinar os tokens
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 # Função para gerar token JWT
 def generate_token(user):
@@ -148,10 +152,10 @@ def token_required(f):
 def get_db_connection():
     try:
         db = mysql.connector.connect(
-            host="database-1.c9ec8o0ioxuo.us-east-2.rds.amazonaws.com",
-            user="admin",
-            password="26042004",
-            database="lab_reservation"
+            host = os.getenv("DB_HOST"),
+            user = os.getenv("DB_USER"),
+            password = os.getenv("DB_PASSWORD"),
+            database = os.getenv("DB_NAME")
         )
         return db
     except mysql.connector.Error as err:
