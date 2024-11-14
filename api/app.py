@@ -2,6 +2,10 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
 from ROUTES import all_blueprints
+import sys
+import os
+
+sys.path.append(os.path.join(os.path.dirname(__file__)))
 
 app = Flask(__name__)
 CORS(app)
