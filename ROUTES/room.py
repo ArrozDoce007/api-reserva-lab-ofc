@@ -9,6 +9,11 @@ sala_lock = threading.Lock()
 
 room_bp = Blueprint('room', __name__)
 
+# Gerenciamento de erros para arquivo muito grande
+@room_bp.errorhandler(413)
+def request_entity_too_large(error):
+    return jsonify({'error': 'O arquivo enviado é muito grande. O tamanho máximo permitido é de 10 MB.'}), 413
+
 # Rota para obter os laboratórios
 @room_bp.route('/laboratorios', methods=['GET'])
 @token_required  # Decorador para proteger a rota
