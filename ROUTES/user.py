@@ -30,7 +30,7 @@ def get_usuarios(matricula):  # Recebe a matrícula do token
     finally:
         cursor.close()
         db.close()
-
+        
 # Rota para deletar usuários
 @user_bp.route('/usuarios/deletar/<int:user_id>', methods=['DELETE'])
 @token_required  # Decorador para proteger a rota
@@ -49,11 +49,11 @@ def deletar_usuario(matricula, user_id):
         if not user:
             return jsonify({'success': False, 'message': 'Usuário não encontrado'}), 404
 
-        # Recupera o e-mail, nome e matrícula do usuário
+        # Recupera dados do usuário
         user_email = user['email']
         user_name = user['nome']
         user_matricula = user['matricula']
-        user_tipo = user.get('tipo_usuario')
+        user_acesso = user.get('acesso', 1)  # Define 1 como padrão se 'acesso' for None
 
         # Excluir rejeições associadas às reservas rejeitadas do usuário
         cursor.execute('''
@@ -74,8 +74,8 @@ def deletar_usuario(matricula, user_id):
         cursor.execute('DELETE FROM usuarios WHERE id = %s', (user_id,))
         db.commit()
 
-        # Personaliza o e-mail baseado no tipo de usuário
-        if user_tipo == 'null':
+        # Personaliza o e-mail baseado no campo 'acesso'
+        if user_acesso == 0:
             subject = "Cadastro negado"
             body = f"""
             <html>
@@ -102,7 +102,7 @@ def deletar_usuario(matricula, user_id):
             </html>
             """
 
-        # Enviar e-mail de notificação de exclusão
+        # Enviar e-mail de notificação
         send_email(user_email, subject, body)
 
         return jsonify({'success': True, 'message': 'Usuário, reservas, rejeições e notificações excluídos com sucesso'}), 200
