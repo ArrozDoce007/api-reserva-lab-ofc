@@ -1,5 +1,5 @@
 # app.py
-from flask import Flask, jsonify
+from flask import Flask
 from flask_cors import CORS
 from ROUTES import all_blueprints
 
