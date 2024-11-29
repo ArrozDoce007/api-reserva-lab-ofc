@@ -12,9 +12,10 @@ load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 # Função para gerar token JWT
-def generate_token(user):
+def generate_token(user, user_type):
     payload = {
         'matricula': user['matricula'],  # Informações do usuário
+        'tipo_usuario': user_type,       # Tipo de usuário no payload
         'exp': datetime.utcnow() + timedelta(minutes=20)
     }
     token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
@@ -36,10 +37,12 @@ def token_required(f):
             # Decodifica o token
             data = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
             matricula = data['matricula']  # Matricula extraída do token
+            user_type = data['tipo_usuario']  # Tipo de usuário extraído do token
         except jwt.ExpiredSignatureError:
             return jsonify({'message': 'Token expirado!'}), 401
         except jwt.InvalidTokenError:
             return jsonify({'message': 'Token inválido!'}), 401
 
-        return f(matricula, *args, **kwargs)
+        # Passa a matrícula e o tipo de usuário para a rota
+        return f(matricula, user_type, *args, **kwargs)
     return decorated

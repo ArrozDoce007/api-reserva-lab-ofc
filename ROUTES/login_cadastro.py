@@ -31,14 +31,18 @@ def login():
                 if acesso != 1:
                     return jsonify({'success': False, 'message': 'Seu cadastro está em análise'}), 403
 
-                # Gera o token JWT
-                token = generate_token(user)
+                # Define o tipo de token com base no tipo de usuário
+                user_type = user['tipo_usuario']
+                if user_type == 'admin':
+                    token = generate_token(user, 'admin')
+                else:
+                    token = generate_token(user, 'regular')
 
                 return jsonify({
                     'success': True,
                     'nome': user['nome'],
                     'matricula': user['matricula'],
-                    'tipo_usuario': user['tipo_usuario'],
+                    'tipo_usuario': user_type,
                     'token': token  # Retorna o token JWT
                 })
             else:
