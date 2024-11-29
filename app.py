@@ -13,7 +13,7 @@ def check_user_agent():
 
     user_agent = request.headers.get('User-Agent', '')
     if "Postman" in user_agent:
-        return jsonify({"message": "Acesso não permitido"}), 403  # Bloqueia requisições do Postman
+        return jsonify({"message": "Acesso não permitido"}), 403
 
 # Configurar CORS
 CORS(app, resources={r"/*": {"origins": "https://reserva-salas-uninassau.netlify.app"}})
