@@ -19,7 +19,7 @@ def send_email(to_email, subject, body):
 
     # Criar mensagem
     message = MIMEMultipart()
-    message["From"] = "Sistema de Salas"
+    message["From"] = os.getenv("EMAIL")
     message["To"] = to_email
     message["Subject"] = subject
 
