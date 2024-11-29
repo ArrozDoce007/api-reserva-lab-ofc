@@ -18,6 +18,9 @@ def request_entity_too_large(error):
 @room_bp.route('/laboratorios', methods=['GET'])
 @token_required  # Decorador para proteger a rota
 def get_laboratorios(matricula, tipo_usuario, is_admin):
+    if not is_admin:  # Restrição para usuários não administradores
+        return jsonify({'message': 'Acesso negado! Apenas administradores podem acessar esta rota.'}), 403
+    
     db = get_db_connection()
     if db is None:
         return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
