@@ -17,7 +17,7 @@ def request_entity_too_large(error):
 # Rota para obter os laboratórios
 @room_bp.route('/laboratorios', methods=['GET'])
 @token_required  # Decorador para proteger a rota
-def get_laboratorios(matricula):
+def get_laboratorios(matricula, tipo_usuario, is_admin):
     db = get_db_connection()
     if db is None:
         return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
