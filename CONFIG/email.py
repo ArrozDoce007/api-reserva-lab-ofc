@@ -14,7 +14,7 @@ def send_email(to_email, subject, body):
     # Configuração do e-mail
     sender_email = os.getenv("EMAIL")
     sender_password = os.getenv("EMAIL_PASSWORD")
-    smtp_server = os.getenv("EMAIL_SERVER")
+    smtp_server = "smtp.office365.com"
     smtp_port = 587
 
     # Criar mensagem
