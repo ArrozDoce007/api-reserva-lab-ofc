@@ -10,7 +10,7 @@ reservation_bp = Blueprint('reservation', __name__)
 # Rota para fazer a reserva
 @reservation_bp.route('/reserve', methods=['POST'])
 @token_required  # Decorador para proteger a rota
-def reservas_lab(matricula):
+def reservas_lab(matricula, tipo_usuario, is_admin):
     db = get_db_connection()
     if db is None:
         return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
@@ -83,7 +83,10 @@ def reservas_lab(matricula):
 # Rota para obter as reservas gerais
 @reservation_bp.route('/reserve/status/geral', methods=['GET'])
 @token_required  # Decorador para proteger a rota
-def get_reservas_geral(matricula):
+def get_reservas_geral(matricula, tipo_usuario, is_admin):
+    if not is_admin:  # Restrição para usuários não administradores
+        return jsonify({'message': 'Acesso negado! Apenas administradores podem acessar esta rota.'}), 403
+    
     db = get_db_connection()
     if db is None:
         return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
@@ -104,7 +107,7 @@ def get_reservas_geral(matricula):
 # Rota para obter o reserva por matrícula
 @reservation_bp.route('/reserve/status', methods=['GET'])
 @token_required  # Decorador para proteger a rota
-def get_reservas_por_matricula(matricula):
+def get_reservas_por_matricula(matricula, tipo_usuario, is_admin):
     db = get_db_connection()
     if db is None:
         return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
@@ -142,7 +145,7 @@ def get_reservas_por_matricula(matricula):
 # Rota para cancelar solicitação
 @reservation_bp.route('/reserve/cancelar/<int:id>', methods=['PUT'])
 @token_required  # Decorador para proteger a rota
-def update_reservas(matricula, id):
+def update_reservas(matricula, tipo_usuario, is_admin, id):
     db = get_db_connection()
     if db is None:
         return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
@@ -233,7 +236,10 @@ def get_rejeicao(pedido_id):
 # Rota para rejeitar um pedido
 @reservation_bp.route('/rejeitar/pedido/<int:id>', methods=['POST'])
 @token_required  # Decorador para proteger a rota
-def rejeitar_pedido(matricula, id):
+def rejeitar_pedido(matricula, tipo_usuario, is_admin, id):
+    if not is_admin:  # Restrição para usuários não administradores
+        return jsonify({'message': 'Acesso negado! Apenas administradores podem acessar esta rota.'}), 403
+    
     db = get_db_connection()
     if db is None:
         return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
@@ -308,7 +314,10 @@ def rejeitar_pedido(matricula, id):
 # Rota para aprovar um pedido
 @reservation_bp.route('/aprovar/pedido/<int:id>', methods=['PUT'])
 @token_required  # Decorador para proteger a rota
-def update_reservas_aprj(matricula, id):
+def update_reservas_aprj(matrimatricula, tipo_usuario, is_admin, id):
+    if not is_admin:  # Restrição para usuários não administradores
+        return jsonify({'message': 'Acesso negado! Apenas administradores podem acessar esta rota.'}), 403
+    
     db = get_db_connection()
     if db is None:
         return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500

@@ -8,7 +8,10 @@ user_bp = Blueprint('user', __name__)
 # Rota para buscar usuários
 @user_bp.route('/usuarios', methods=['GET'])
 @token_required  # Decorador para proteger a rota
-def get_usuarios(matricula):  # Recebe a matrícula do token
+def get_usuarios(matricula, tipo_usuario, is_admin):
+    if not is_admin:  # Restrição para usuários não administradores
+        return jsonify({'message': 'Acesso negado! Apenas administradores podem acessar esta rota.'}), 403
+    
     db = get_db_connection()
     if db is None:
         return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
@@ -34,7 +37,10 @@ def get_usuarios(matricula):  # Recebe a matrícula do token
 # Rota para deletar usuários
 @user_bp.route('/usuarios/deletar/<int:user_id>', methods=['DELETE'])
 @token_required  # Decorador para proteger a rota
-def deletar_usuario(matricula, user_id):
+def deletar_usuario(matricula, tipo_usuario, is_admin, user_id):
+    if not is_admin:  # Restrição para usuários não administradores
+        return jsonify({'message': 'Acesso negado! Apenas administradores podem acessar esta rota.'}), 403
+    
     db = get_db_connection()
     if db is None:
         return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
@@ -116,7 +122,10 @@ def deletar_usuario(matricula, user_id):
 # Rota para aprovar um usuário
 @user_bp.route('/usuarios/aprovar/<int:user_id>', methods=['PUT'])
 @token_required  # Decorador para proteger a rota
-def aprove_usuario(matricula, user_id):
+def aprove_usuario(matricula, tipo_usuario, is_admin, user_id):
+    if not is_admin:  # Restrição para usuários não administradores
+        return jsonify({'message': 'Acesso negado! Apenas administradores podem acessar esta rota.'}), 403
+    
     db = get_db_connection()
     if db is None:
         return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
@@ -177,7 +186,10 @@ def aprove_usuario(matricula, user_id):
 # Rota para atualizar um usuário
 @user_bp.route('/usuarios/atualizar/<int:user_id>', methods=['PUT'])
 @token_required  # Decorador para proteger a rota
-def update_usuario(matricula, user_id):
+def update_usuario(matricula, tipo_usuario, is_admin, user_id):
+    if not is_admin:  # Restrição para usuários não administradores
+        return jsonify({'message': 'Acesso negado! Apenas administradores podem acessar esta rota.'}), 403
+    
     db = get_db_connection()
     if db is None:
         return jsonify({"error": "Erro ao conectar ao banco de dados"}), 500
