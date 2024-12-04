@@ -5,6 +5,16 @@ from ROUTES import all_blueprints
 
 app = Flask(__name__)
 
+# Adicionar uma verificação no cabeçalho User-Agent
+@app.before_request
+def check_user_agent():
+    if request.method == "OPTIONS":
+        return  # Ignora as requisições OPTIONS (necessárias para CORS)
+
+    user_agent = request.headers.get('User-Agent', '')
+    if "Postman" in user_agent:
+        return jsonify({"message": "Acesso não permitido"}), 403
+
 # Configurar CORS
 CORS(app, resources={r"/*": {"origins": "https://reserva-salas-uninassau.netlify.app"}})
 

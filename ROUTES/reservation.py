@@ -1,8 +1,7 @@
 from flask import Blueprint, request, jsonify
 from CONFIG.db import get_db_connection
 from CONFIG.token import token_required
-from CONFIG.email import send_email_async, send_email
-from CONFIG.agenda import adicionar_evento_google_calendar
+from CONFIG.email import send_email_async
 from datetime import datetime
 import mysql.connector
 
@@ -317,8 +316,8 @@ def rejeitar_pedido(matricula, tipo_usuario, is_admin, id):
 # Rota para aprovar um pedido
 @reservation_bp.route('/aprovar/pedido/<int:id>', methods=['PUT'])
 @token_required  # Decorador para proteger a rota
-def aprovar_pedido(matricula, tipo_usuario, is_admin, id):
-    if not is_admin:
+def aprovar_pedido(matrimatricula, tipo_usuario, is_admin, id):
+    if not is_admin:  # Restrição para usuários não administradores
         return jsonify({'message': 'Acesso negado! Apenas administradores podem acessar esta rota.'}), 403
     
     db = get_db_connection()
@@ -333,6 +332,7 @@ def aprovar_pedido(matricula, tipo_usuario, is_admin, id):
         if new_status not in ['pendente', 'aprovado']:
             return jsonify({"error": "Status inválido"}), 400
 
+        # Atualizar o status da reserva
         update_query = "UPDATE reservas SET status = %s WHERE id = %s"
         cursor.execute(update_query, (new_status, id))
         db.commit()
@@ -340,14 +340,16 @@ def aprovar_pedido(matricula, tipo_usuario, is_admin, id):
         if cursor.rowcount == 0:
             return jsonify({"error": "Reserva não encontrada"}), 404
 
+        # Buscar detalhes da reserva e o e-mail do usuário
         cursor.execute("SELECT matricula, lab_name, date, time, time_fim, purpose, nome FROM reservas WHERE id = %s", (id,))
         reservation = cursor.fetchone()
 
         if reservation:
-            formatted_date = datetime.strptime(reservation['date'], '%Y-%m-%d').strftime('%Y-%m-%d')
+            formatted_date = datetime.strptime(reservation['date'], '%Y-%m-%d').strftime('%d-%m-%Y')  # Formatar a data
             notification_message = f"Sua reserva para {reservation['lab_name']} em {formatted_date} foi {new_status}."
             create_notification(reservation['matricula'], notification_message)
 
+            # Obter o e-mail do usuário no banco de dados
             cursor.execute('SELECT email FROM usuarios WHERE matricula = %s', (reservation['matricula'],))
             user = cursor.fetchone()
 
@@ -359,38 +361,25 @@ def aprovar_pedido(matricula, tipo_usuario, is_admin, id):
                 time_fim = reservation['time_fim']
                 purpose = reservation['purpose']
 
-                if new_status == 'aprovado':
-                    date = datetime.strptime(reservation['date'], '%Y-%m-%d')
-                    start_time = datetime.strptime(f"{reservation['date']} {reservation[time]}", '%Y-%m-%d %H:%M:%S')
-                    end_time = datetime.strptime(f"{reservation['date']} {reservation[time_fim]}", '%Y-%m-%d %H:%M:%S')
-                    
-                    # Create the event in Google Calendar
-                    event_link = adicionar_evento_google_calendar(
-                        summary=f"Reserva de {lab_name}",
-                        description=f"Reserva para {nome}\nFinalidade: {purpose}",
-                        start_time=start_time.isoformat(),
-                        end_time=end_time.isoformat(),
-                        attendees_emails=[email]
-                    )
+                # Criar o corpo do e-mail de aprovação
+                subject = "Reserva Aprovada"
+                body = f"""
+                <html>
+                    <body>
+                        <h2>Olá {nome}</h2>
+                        <p>Sua reserva para o(a) <strong>{lab_name}</strong> no dia <strong>{formatted_date}</strong> das <strong>{time}</strong> às <strong>{time_fim}</strong> foi <strong style="color: #006400;">{new_status}</strong>.</p>
+                        <p>Finalidade: {purpose}</p>
+                        <br>
+                        <p>Estamos ansiosos para recebê-lo. Caso tenha dúvidas, entre em contato com a Administração.</p>
+                        <br>
+                        <img src="https://reserva-lab-nassau.s3.amazonaws.com/assets/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
+                    </body>
+                </html>
+                """
 
-                    # The rest of the email creation code remains the same
-                    subject = "Reserva Aprovada"
-                    body = f"""
-                    <html>
-                        <body>
-                            <h2>Olá {nome}</h2>
-                            <p>Sua reserva para o(a) <strong>{lab_name}</strong> no dia <strong>{date.strftime('%d-%m-%Y')}</strong> das <strong>{start_time.strftime('%H:%M')}</strong> às <strong>{end_time.strftime('%H:%M')}</strong> foi <strong style="color: #006400;">{new_status}</strong>.</p>
-                            <p>Finalidade: {purpose}</p>
-                            <p><a href="{event_link}">Clique aqui para adicionar ao seu calendário</a>.</p>
-                            <br>
-                            <p>Estamos ansiosos para recebê-lo. Caso tenha dúvidas, entre em contato com a Administração.</p>
-                            <br>
-                            <img src="https://reserva-lab-nassau.s3.amazonaws.com/assets/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
-                        </body>
-                    </html>
-                    """
-                    send_email(email, subject, body)
-
+                # Enviar o e-mail de aprovação de forma assíncrona
+                send_email_async(email, subject, body)
+                
         return jsonify({"message": "Status da reserva atualizado com sucesso"}), 200
     except Exception as e:
         return jsonify({"error": f"Erro ao atualizar a reserva: {str(e)}"}), 500
