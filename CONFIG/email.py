@@ -67,7 +67,7 @@ def send_email(to_email, subject, body):
     }
     
     # URL da API Graph para enviar e-mail
-    url = "https://graph.microsoft.com/v1.0/users/{sender_email}/sendMail"  # Use o e-mail do usuário configurado
+    url = f"https://graph.microsoft.com/v1.0/users/{sender_email}/sendMail"  # Use o e-mail do usuário configurado
     
     # Configurar cabeçalhos
     headers = {
