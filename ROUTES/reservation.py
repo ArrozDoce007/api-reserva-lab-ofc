@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from CONFIG.db import get_db_connection
 from CONFIG.token import token_required
 from CONFIG.email import send_email_async
-from CONFIG.agenda import criar_evento_google_calendar
+from CONFIG.agenda import adicionar_evento_google_calendar
 from datetime import datetime
 import mysql.connector
 
@@ -362,40 +362,37 @@ def aprovar_pedido(matrimatricula, tipo_usuario, is_admin, id):
                 time_fim = reservation['time_fim']
                 purpose = reservation['purpose']
 
-                # Criar o corpo do e-mail de aprovação
-                subject = "Reserva Aprovada"
-                body = f"""
-                <html>
-                    <body>
-                        <h2>Olá {nome}</h2>
-                        <p>Sua reserva para o(a) <strong>{lab_name}</strong> no dia <strong>{formatted_date}</strong> das <strong>{time}</strong> às <strong>{time_fim}</strong> foi <strong style="color: #006400;">{new_status}</strong>.</p>
-                        <p>Finalidade: {purpose}</p>
-                        <br>
-                        <p>Estamos ansiosos para recebê-lo. Caso tenha dúvidas, entre em contato com a Administração.</p>
-                        <br>
-                        <img src="https://reserva-lab-nassau.s3.amazonaws.com/assets/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
-                    </body>
-                </html>
-                """
-
-                # Enviar o e-mail de aprovação de forma assíncrona
-                send_email_async(email, subject, body)
-                
-                # Criar o evento no calendário da conta do administrador
+                # Criar o evento no Google Calendar
                 if new_status == 'aprovado':
-                    start_time = f"{reservation['date']}T{reservation['time']}"
-                    end_time = f"{reservation['date']}T{reservation['time_fim']}"
-                    event_link = criar_evento_google_calendar(
-                        summary=f"Reserva para {lab_name}",
-                        description=f"Finalidade: {purpose}",
+                    start_time = f"{reservation['date']}T{time}:00"
+                    end_time = f"{reservation['date']}T{time_fim}:00"
+                    event_link = adicionar_evento_google_calendar(
+                        summary=f"Reserva de {lab_name}",
+                        description=purpose,
                         start_time=start_time,
-                        end_time=end_time
+                        end_time=end_time,
+                        attendees_emails=[email]
                     )
 
-                    # Opcional: Incluir o link do evento no e-mail
-                    body += f"<p><a href='{event_link}'>Clique aqui para visualizar o evento no Google Calendar</a></p>"
+                    # Criar o corpo do e-mail de aprovação
+                    subject = "Reserva Aprovada"
+                    body = f"""
+                    <html>
+                        <body>
+                            <h2>Olá {nome}</h2>
+                            <p>Sua reserva para o(a) <strong>{lab_name}</strong> no dia <strong>{formatted_date}</strong> das <strong>{time}</strong> às <strong>{time_fim}</strong> foi <strong style="color: #006400;">{new_status}</strong>.</p>
+                            <p>Finalidade: {purpose}</p>
+                            <p><a href="{event_link}">Clique aqui para adicionar ao seu calendário</a>.</p>
+                            <br>
+                            <p>Estamos ansiosos para recebê-lo. Caso tenha dúvidas, entre em contato com a Administração.</p>
+                            <br>
+                            <img src="https://reserva-lab-nassau.s3.amazonaws.com/assets/uninassau.png" alt="Logo Uninassau" style="width:200px;"/>
+                        </body>
+                    </html>
+                    """
+                    # Enviar o e-mail de aprovação de forma assíncrona
                     send_email_async(email, subject, body)
-                
+
         return jsonify({"message": "Status da reserva atualizado com sucesso"}), 200
     except Exception as e:
         return jsonify({"error": f"Erro ao atualizar a reserva: {str(e)}"}), 500
