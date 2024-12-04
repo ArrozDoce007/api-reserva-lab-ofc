@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from CONFIG.db import get_db_connection
 from CONFIG.token import token_required
 from CONFIG.email import send_email_async
+from CONFIG.calendario import create_outlook_event
 from datetime import datetime
 import mysql.connector
 
@@ -314,7 +315,7 @@ def rejeitar_pedido(matricula, tipo_usuario, is_admin, id):
 # Rota para aprovar um pedido
 @reservation_bp.route('/aprovar/pedido/<int:id>', methods=['PUT'])
 @token_required  # Decorador para proteger a rota
-def update_reservas_aprj(matrimatricula, tipo_usuario, is_admin, id):
+def aprovar_pedido(matrimatricula, tipo_usuario, is_admin, id):
     if not is_admin:  # Restrição para usuários não administradores
         return jsonify({'message': 'Acesso negado! Apenas administradores podem acessar esta rota.'}), 403
     
@@ -375,6 +376,10 @@ def update_reservas_aprj(matrimatricula, tipo_usuario, is_admin, id):
 
                 # Enviar o e-mail de aprovação de forma assíncrona
                 send_email_async(email, subject, body)
+                
+                start_datetime = f"{reservation['date']}T{reservation['time']}:00"
+                end_datetime = f"{reservation['date']}T{reservation['time_fim']}:00"
+                create_outlook_event(nome, email, lab_name, start_datetime, end_datetime)
 
         return jsonify({"message": "Status da reserva atualizado com sucesso"}), 200
     except Exception as e:
