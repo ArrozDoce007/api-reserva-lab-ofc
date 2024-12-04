@@ -346,7 +346,9 @@ def aprovar_pedido(matrimatricula, tipo_usuario, is_admin, id):
         reservation = cursor.fetchone()
 
         if reservation:
-            formatted_date = datetime.strptime(reservation['date'], '%Y-%m-%d').strftime('%d-%m-%Y')  # Formatar a data
+            # Formatar a data corretamente para o formato 'YYYY-MM-DD'
+            formatted_date = datetime.strptime(reservation['date'], '%Y-%m-%d').strftime('%Y-%m-%d')
+
             notification_message = f"Sua reserva para {reservation['lab_name']} em {formatted_date} foi {new_status}."
             create_notification(reservation['matricula'], notification_message)
 
@@ -358,14 +360,16 @@ def aprovar_pedido(matrimatricula, tipo_usuario, is_admin, id):
                 email = user['email']
                 nome = reservation['nome']
                 lab_name = reservation['lab_name']
-                time = reservation['time']
-                time_fim = reservation['time_fim']
+                time = reservation['time']  # Hora de início
+                time_fim = reservation['time_fim']  # Hora de término
                 purpose = reservation['purpose']
+
+                # Garantir que a hora esteja no formato adequado (YYYY-MM-DDTHH:MM:SS)
+                start_time = f"{formatted_date}T{time}:00"
+                end_time = f"{formatted_date}T{time_fim}:00"
 
                 # Criar o evento no Google Calendar
                 if new_status == 'aprovado':
-                    start_time = f"{reservation['date']}T{time}:00"
-                    end_time = f"{reservation['date']}T{time_fim}:00"
                     event_link = adicionar_evento_google_calendar(
                         summary=f"Reserva de {lab_name}",
                         description=purpose,

@@ -20,17 +20,19 @@ def adicionar_evento_google_calendar(summary, description, start_time, end_time,
             'description': description,
             'start': {
                 'dateTime': start_time,
-                'timeZone': 'America/Recife',
+                'timeZone': 'America/Recife',  # Ajuste conforme necessário
             },
             'end': {
                 'dateTime': end_time,
-                'timeZone': 'America/Recife',
+                'timeZone': 'America/Recife',  # Ajuste conforme necessário
             },
             'attendees': [{'email': email} for email in attendees_emails],
         }
 
         # Criar evento no Google Calendar (usando o calendarId 'primary' para a conta de serviço)
         created_event = service.events().insert(calendarId='primary', body=event).execute()
+
+        print(f'Evento criado: {created_event.get("htmlLink")}')
         return created_event.get('htmlLink')  # Retorna o link do evento criado
     except Exception as e:
         raise Exception(f"Erro ao criar evento no Google Calendar: {str(e)}")
