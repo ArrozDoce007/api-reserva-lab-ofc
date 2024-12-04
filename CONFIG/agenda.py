@@ -1,38 +1,34 @@
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
+from datetime import datetime, timezone
 
-# Caminho para o arquivo de credenciais
-GOOGLE_CREDENTIALS_FILE = 'credentials.json'  # Coloque o caminho correto aqui
+GOOGLE_CREDENTIALS_FILE = 'credentials.json'
 
-# Função para criar o evento no Google Calendar
 def adicionar_evento_google_calendar(summary, description, start_time, end_time, attendees_emails):
     try:
-        # Autenticação com a conta de serviço
         credentials = Credentials.from_service_account_file(
             GOOGLE_CREDENTIALS_FILE,
             scopes=["https://www.googleapis.com/auth/calendar"]
         )
         service = build('calendar', 'v3', credentials=credentials)
 
-        # Detalhes do evento
         event = {
             'summary': summary,
             'description': description,
             'start': {
                 'dateTime': start_time,
-                'timeZone': 'America/Recife',  # Ajuste conforme necessário
+                'timeZone': 'America/Recife',  # Adjust if necessary
             },
             'end': {
                 'dateTime': end_time,
-                'timeZone': 'America/Recife',  # Ajuste conforme necessário
+                'timeZone': 'America/Recife',  # Adjust if necessary
             },
             'attendees': [{'email': email} for email in attendees_emails],
         }
 
-        # Criar evento no Google Calendar (usando o calendarId 'primary' para a conta de serviço)
         created_event = service.events().insert(calendarId='primary', body=event).execute()
-
         print(f'Evento criado: {created_event.get("htmlLink")}')
-        return created_event.get('htmlLink')  # Retorna o link do evento criado
+        return created_event.get('htmlLink')
     except Exception as e:
-        raise Exception(f"Erro ao criar evento no Google Calendar: {str(e)}")
+        print(f"Erro ao criar evento no Google Calendar: {str(e)}")
+        raise
