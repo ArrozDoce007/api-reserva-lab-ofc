@@ -44,9 +44,6 @@ def send_email(to_email, subject, body):
     if not access_token:
         print("Não foi possível obter o token de acesso.")
         return
-
-    # Configuração do e-mail
-    sender_email = os.getenv("EMAIL")
     
     # Configurar o corpo do e-mail
     email_data = {
@@ -67,7 +64,8 @@ def send_email(to_email, subject, body):
     }
     
     # URL da API Graph para enviar e-mail
-    url = f"https://graph.microsoft.com/v1.0/users/{sender_email}/sendMail"  # Use o e-mail do usuário configurado
+    url = "https://graph.microsoft.com/v1.0/me/sendMail"
+
     
     # Configurar cabeçalhos
     headers = {
