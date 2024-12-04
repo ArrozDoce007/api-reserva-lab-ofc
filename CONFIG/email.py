@@ -19,7 +19,7 @@ def get_access_token():
 
     client_id = os.getenv("CLIENT_ID")
     client_secret = os.getenv("CLIENT_SECRET")
-    scope = "https://outlook.office365.com/.default"
+    scope = "https://graph.microsoft.com/.default"
     
     # Parâmetros para obtenção do token
     data = {
