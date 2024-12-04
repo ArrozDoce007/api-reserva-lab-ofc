@@ -10,5 +10,3 @@ boto3
 bcrypt
 pyjwt
 python-dotenv
-requests
-msal
