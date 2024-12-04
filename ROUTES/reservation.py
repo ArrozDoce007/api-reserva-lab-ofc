@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from CONFIG.db import get_db_connection
 from CONFIG.token import token_required
-from CONFIG.email import send_email_async
+from CONFIG.email import send_email_async, send_email
 from CONFIG.agenda import adicionar_evento_google_calendar
 from datetime import datetime
 import mysql.connector
@@ -389,7 +389,7 @@ def aprovar_pedido(matricula, tipo_usuario, is_admin, id):
                         </body>
                     </html>
                     """
-                    send_email_async(email, subject, body)
+                    send_email(email, subject, body)
 
         return jsonify({"message": "Status da reserva atualizado com sucesso"}), 200
     except Exception as e:
