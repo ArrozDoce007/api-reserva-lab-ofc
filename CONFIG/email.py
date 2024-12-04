@@ -32,7 +32,7 @@ def send_email(to_email, subject, body):
             server.starttls()
             server.login(sender_email, sender_password)
             server.send_message(message)
-        print(f"Email enviado com sucesso para {to_email}")
+        print(f"Email enviado com sucesso")
     except Exception as e:
         print(f"Erro ao enviar e-mail: {e}")
 

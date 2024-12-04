@@ -35,10 +35,15 @@ def create_outlook_event(participant_name, email, lab_name, start_datetime, end_
     }
 
     event_data = {
-        "subject": f"Reserva Aprovada: {lab_name}",
+        "subject": f"Reserva Aprovada",
         "body": {
             "contentType": "HTML",
-            "content": f"Reserva confirmada para o laboratório {lab_name}."
+            "content": f"""
+                <p><strong>Laboratório:</strong> {lab_name}</p>
+                <p><strong>Usuário:</strong> {participant_name}</p>
+                <p><strong>Data:</strong> {start_datetime.split('T')[0]}</p>
+                <p><strong>Horário:</strong> {start_datetime.split('T')[1]} - {end_datetime.split('T')[1]}</p>
+            """
         },
         "start": {
             "dateTime": start_datetime,
