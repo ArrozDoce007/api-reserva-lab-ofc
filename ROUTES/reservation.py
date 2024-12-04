@@ -377,8 +377,8 @@ def aprovar_pedido(matrimatricula, tipo_usuario, is_admin, id):
                 # Enviar o e-mail de aprovação de forma assíncrona
                 send_email_async(email, subject, body)
                 
-                start_datetime = f"{reservation['date']}T{reservation['time']}:00"
-                end_datetime = f"{reservation['date']}T{reservation['time_fim']}:00"
+                start_datetime = f"{reservation[{formatted_date}]}T{reservation['time']}"
+                end_datetime = f"{reservation[{formatted_date}]}T{reservation['time_fim']}"
                 create_outlook_event(nome, email, lab_name, start_datetime, end_datetime)
 
         return jsonify({"message": "Status da reserva atualizado com sucesso"}), 200
