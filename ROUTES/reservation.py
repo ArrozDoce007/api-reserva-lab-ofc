@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from CONFIG.db import get_db_connection
 from CONFIG.token import token_required
 from CONFIG.email import send_email_async
+from CONFIG.agenda import criar_evento_google_calendar
 from datetime import datetime
 import mysql.connector
 
@@ -379,6 +380,21 @@ def aprovar_pedido(matrimatricula, tipo_usuario, is_admin, id):
 
                 # Enviar o e-mail de aprovação de forma assíncrona
                 send_email_async(email, subject, body)
+                
+                # Criar o evento no calendário da conta do administrador
+                if new_status == 'aprovado':
+                    start_time = f"{reservation['date']}T{reservation['time']}"
+                    end_time = f"{reservation['date']}T{reservation['time_fim']}"
+                    event_link = criar_evento_google_calendar(
+                        summary=f"Reserva para {lab_name}",
+                        description=f"Finalidade: {purpose}",
+                        start_time=start_time,
+                        end_time=end_time
+                    )
+
+                    # Opcional: Incluir o link do evento no e-mail
+                    body += f"<p><a href='{event_link}'>Clique aqui para visualizar o evento no Google Calendar</a></p>"
+                    send_email_async(email, subject, body)
                 
         return jsonify({"message": "Status da reserva atualizado com sucesso"}), 200
     except Exception as e:
