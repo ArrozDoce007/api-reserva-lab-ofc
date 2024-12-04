@@ -11,7 +11,8 @@ executor = ThreadPoolExecutor(max_workers=2)
 
 # Função para obter o token de acesso OAuth2 com credenciais de cliente
 def get_access_token():
-    url = f"https://login.microsoftonline.com/common/oauth2/v2.0/token"  # URL para obter o token
+    tenant_id = os.getenv("TENANT_ID")  # Carregar o Tenant ID do arquivo .env
+    url = f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"  # URL para obter o token
 
     client_id = os.getenv("CLIENT_ID")
     client_secret = os.getenv("CLIENT_SECRET")
