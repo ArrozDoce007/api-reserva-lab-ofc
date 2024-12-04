@@ -285,6 +285,7 @@ def rejeitar_pedido(matricula, tipo_usuario, is_admin, id):
                 lab_name = reservation['lab_name']
                 time = reservation['time']
                 time_fim = reservation['time_fim']
+                purpose = reservation['purpose']
 
                 # Criar o corpo do e-mail de rejeição
                 subject = "Reserva Rejeitada"
@@ -293,6 +294,7 @@ def rejeitar_pedido(matricula, tipo_usuario, is_admin, id):
                     <body>
                         <h2>Olá {nome}</h2>
                         <p>Lamentamos informar que sua reserva para o(a) <strong>{lab_name}</strong> no dia <strong>{formatted_date}</strong> das <strong>{time}</strong> às <strong>{time_fim}</strong> foi <strong style="color: #FF0000;">{new_status}</strong>.</p>
+                        <p>Finalidade: {purpose}</p>
                         <p>Motivo da rejeição: {motivo}</p>
                         <br>
                         <p>Caso tenha dúvidas, entre em contato com a Administração.</p>
@@ -339,7 +341,7 @@ def aprovar_pedido(matrimatricula, tipo_usuario, is_admin, id):
             return jsonify({"error": "Reserva não encontrada"}), 404
 
         # Buscar detalhes da reserva e o e-mail do usuário
-        cursor.execute("SELECT matricula, lab_name, date, time, time_fim, nome FROM reservas WHERE id = %s", (id,))
+        cursor.execute("SELECT matricula, lab_name, date, time, time_fim, purpose, nome FROM reservas WHERE id = %s", (id,))
         reservation = cursor.fetchone()
 
         if reservation:
@@ -357,6 +359,7 @@ def aprovar_pedido(matrimatricula, tipo_usuario, is_admin, id):
                 lab_name = reservation['lab_name']
                 time = reservation['time']
                 time_fim = reservation['time_fim']
+                purpose = reservation['purpose']
 
                 # Criar o corpo do e-mail de aprovação
                 subject = "Reserva Aprovada"
@@ -365,6 +368,7 @@ def aprovar_pedido(matrimatricula, tipo_usuario, is_admin, id):
                     <body>
                         <h2>Olá {nome}</h2>
                         <p>Sua reserva para o(a) <strong>{lab_name}</strong> no dia <strong>{formatted_date}</strong> das <strong>{time}</strong> às <strong>{time_fim}</strong> foi <strong style="color: #006400;">{new_status}</strong>.</p>
+                        <p>Finalidade: {purpose}</p>
                         <br>
                         <p>Estamos ansiosos para recebê-lo. Caso tenha dúvidas, entre em contato com a Administração.</p>
                         <br>
