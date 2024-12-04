@@ -9,14 +9,14 @@ load_dotenv()
 
 executor = ThreadPoolExecutor(max_workers=2)
 
-# Função para obter o token de acesso OAuth2
+# Função para obter o token de acesso OAuth2 com credenciais de cliente
 def get_access_token():
     tenant_id = os.getenv("TENANT_ID")  # Carregar o Tenant ID do arquivo .env
-    url = f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"  # URL com o Tenant ID
+    url = f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"  # URL para obter o token
 
     client_id = os.getenv("CLIENT_ID")
     client_secret = os.getenv("CLIENT_SECRET")
-    scope = "https://graph.microsoft.com/.default"
+    scope = "https://graph.microsoft.com/.default"  # A permissão deve ser para a API da Microsoft Graph
     
     # Parâmetros para obtenção do token
     data = {
@@ -36,7 +36,7 @@ def get_access_token():
         print(f"Erro ao obter o token: {response.text}")
         return None
 
-# Função para enviar e-mail via Microsoft Graph API
+# Função para enviar e-mail via Microsoft Graph API (sem interação humana)
 def send_email(to_email, subject, body):
     # Obter o token de acesso OAuth2
     access_token = get_access_token()
@@ -67,7 +67,7 @@ def send_email(to_email, subject, body):
     }
     
     # URL da API Graph para enviar e-mail
-    url = "https://graph.microsoft.com/v1.0/me/sendMail"
+    url = f"https://graph.microsoft.com/v1.0/users/{sender_email}/sendMail"  # Use o e-mail do usuário configurado
     
     # Configurar cabeçalhos
     headers = {
