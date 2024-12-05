@@ -267,7 +267,7 @@ def rejeitar_pedido(matricula, tipo_usuario, is_admin, id):
         db.commit()
 
         # Criar notificação para o usuário
-        cursor.execute("SELECT matricula, lab_name, date, time, time_fim, nome FROM reservas WHERE id = %s", (id,))
+        cursor.execute("SELECT matricula, lab_name, date, time, time_fim, purpose, nome FROM reservas WHERE id = %s", (id,))
         reservation = cursor.fetchone()
 
         if reservation:
